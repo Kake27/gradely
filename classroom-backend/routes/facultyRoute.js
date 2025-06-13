@@ -53,13 +53,11 @@ facultyRouter.get("/getCourses/:facultyId", async (req, res) => {
         if(!req.params.facultyId) return res.status(400).json({error: "Faculty ID required!"});
 
         const faculty = await Faculty.findById(req.params.facultyId).populate('courses')
-
         if (!faculty) {
             return res.status(404).json({ error: "Faculty not found" });
         }
 
         res.status(200).json({ courses: faculty.courses });
-
     }
     catch(err) {
         console.error("Error getting courses: ", err)

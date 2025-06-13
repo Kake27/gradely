@@ -2,8 +2,9 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { UserContext } from "../context/ContextProvider";
-import { ArrowLeft, Users, BookOpen, ClipboardList, Upload, Plus, X, Calendar, CheckCircle, 
-        Clock,Menu,UserPlus} from 'lucide-react';
+import { ArrowLeft, Users, BookOpen, ClipboardList, Upload, Plus, X, Calendar, CheckCircle, Clock,Menu,UserPlus} from 'lucide-react';
+
+import toast, {Toaster} from "react-hot-toast";
 
 export default function FacultyCourse() {
     const navigate = useNavigate()
@@ -19,8 +20,6 @@ export default function FacultyCourse() {
     const [participantType, setParticipantType] = useState('student');
     const [showSidebar, setShowSidebar] = useState(false);
 
-
-    const [loadedCourseData, setLoadedCourseData] = useState(false)
     const [students, setStudents] = useState([])
     const [tas, setTas] = useState([])
 
@@ -107,20 +106,20 @@ export default function FacultyCourse() {
     }
   ];
 
-  const [participants, setParticipants] = useState([
-    { id: '1', name: 'Sarah Wilson', email: 'sarah.wilson@university.edu', role: 'ta' },
-    { id: '2', name: 'Mike Chen', email: 'mike.chen@university.edu', role: 'ta' },
-    { id: '3', name: 'Emily Rodriguez', email: 'emily.rodriguez@university.edu', role: 'ta' },
-    { id: '4', name: 'Alice Johnson', email: 'alice.johnson@student.edu', role: 'student' },
-    { id: '5', name: 'Bob Smith', email: 'bob.smith@student.edu', role: 'student' },
-    { id: '6', name: 'Carol Davis', email: 'carol.davis@student.edu', role: 'student' },
-    { id: '7', name: 'David Wilson', email: 'david.wilson@student.edu', role: 'student' },
-    { id: '8', name: 'Emma Brown', email: 'emma.brown@student.edu', role: 'student' },
-    { id: '9', name: 'Frank Miller', email: 'frank.miller@student.edu', role: 'student' },
-    { id: '10', name: 'Grace Lee', email: 'grace.lee@student.edu', role: 'student' },
-    { id: '11', name: 'Henry Taylor', email: 'henry.taylor@student.edu', role: 'student' },
-    { id: '12', name: 'Ivy Chen', email: 'ivy.chen@student.edu', role: 'student' }
-  ]);
+  // const [participants, setParticipants] = useState([
+  //   { id: '1', name: 'Sarah Wilson', email: 'sarah.wilson@university.edu', role: 'ta' },
+  //   { id: '2', name: 'Mike Chen', email: 'mike.chen@university.edu', role: 'ta' },
+  //   { id: '3', name: 'Emily Rodriguez', email: 'emily.rodriguez@university.edu', role: 'ta' },
+  //   { id: '4', name: 'Alice Johnson', email: 'alice.johnson@student.edu', role: 'student' },
+  //   { id: '5', name: 'Bob Smith', email: 'bob.smith@student.edu', role: 'student' },
+  //   { id: '6', name: 'Carol Davis', email: 'carol.davis@student.edu', role: 'student' },
+  //   { id: '7', name: 'David Wilson', email: 'david.wilson@student.edu', role: 'student' },
+  //   { id: '8', name: 'Emma Brown', email: 'emma.brown@student.edu', role: 'student' },
+  //   { id: '9', name: 'Frank Miller', email: 'frank.miller@student.edu', role: 'student' },
+  //   { id: '10', name: 'Grace Lee', email: 'grace.lee@student.edu', role: 'student' },
+  //   { id: '11', name: 'Henry Taylor', email: 'henry.taylor@student.edu', role: 'student' },
+  //   { id: '12', name: 'Ivy Chen', email: 'ivy.chen@student.edu', role: 'student' }
+  // ]);
 
     // const tas = participants.filter(p => p.role === 'ta');
     // const students = participants.filter(p => p.role === 'student');
@@ -152,16 +151,47 @@ export default function FacultyCourse() {
         setShowCreateModal(false);
     };
 
-    const handleAddParticipant = () => {
-        if (participantForm.name.trim() && participantForm.email.trim()) {
-        const newParticipant = {
-            id: (participants.length + 1).toString(),
-            name: participantForm.name.trim(),
-            email: participantForm.email.trim(),
-            role: participantType
-        };
-        
-        setParticipants([...participants, newParticipant]);
+    const handleAddParticipant = async () => {
+        const email = participantForm.email.trim()
+        if (email) {
+          try {
+            let res;
+            if(participantType==='ta') {
+                res = await axios.get("http://localhost:5000/ta/getTAID", {
+                params: {email: email}
+              })
+            }
+            else {
+              res = await axios.get("http://localhost:5000/student/getStudentID",{ 
+                params: {email: email}
+              })
+            }
+
+            if(!res.data) {
+              toast.error("This user hasn't registered yet!")
+              return
+            }
+
+            const taId = res.data
+            const courseRes = await axios.post("http://localhost:5000/course/addTA", {
+              courseId: courseId,
+              taId: taId
+            })
+
+
+            const taRes = await axios.post("http://localhost:5000/ta/addCourse", {
+              courseId: courseId,
+              taId: taId
+            })
+
+            toast.success("Added TA successfully to the course!")
+          }
+          catch(err) {
+            console.log("Error accessing db", err);
+            return;
+          }
+
+        // setParticipants([...participants, newParticipant]);
         setParticipantForm({ name: '', email: '' });
         setShowAddParticipantModal(false);
         }
@@ -196,7 +226,9 @@ export default function FacultyCourse() {
                   return
               }
               setCourseData(res.data)
-              setLoadedCourseData(true)
+              setTas(res.data.tas)
+              setStudents(res.data.students)
+
           }
           catch(err) {
               console.log("Error fetching course: ", err);
@@ -209,27 +241,9 @@ export default function FacultyCourse() {
 
     }, [loading, user, courseId])
 
-    useEffect(() => {
-      if(!loadedCourseData) return;
-
-      const setData = async () => {
-        try {
-          setStudents(courseData.students)
-          setTas(courseData.tas)
-
-        }
-        catch(err) {
-          console.log("Error occured while setting participant data: ", err)
-          return
-        }
-      }
-
-      if(loadedCourseData) setData()
-      
-    }, [loadedCourseData, courseData]);
-
     return (
       <div className="min-h-screen bg-gray-50">
+        <Toaster />
       {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -448,7 +462,7 @@ export default function FacultyCourse() {
               </div>
               <div className="space-y-2 max-h-32 overflow-y-auto">
                 {tas.map((ta) => (
-                  <div key={ta.id} className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg">
+                  <div key={ta._id} className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg">
                     <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                       {ta.name.charAt(0)}
                     </div>
@@ -692,6 +706,7 @@ export default function FacultyCourse() {
                 <input
                   type="email"
                   id="participantEmail"
+                  required
                   value={participantForm.email}
                   onChange={(e) => setParticipantForm({ ...participantForm, email: e.target.value })}
                   placeholder={`Enter ${participantType === 'ta' ? 'TA' : 'student'} email`}
@@ -713,19 +728,17 @@ export default function FacultyCourse() {
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
               <button
                 onClick={handleCancelAddParticipant}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                 Cancel
               </button>
               <button
                 onClick={handleAddParticipant}
-                disabled={!participantForm.name.trim() || !participantForm.email.trim()}
+                disabled={!participantForm.email.trim()}
                 className={`px-4 py-2 text-white rounded-lg transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed ${
                   participantType === 'ta' 
                     ? 'bg-blue-600 hover:bg-blue-700' 
                     : 'bg-green-600 hover:bg-green-700'
-                }`}
-              >
+                }`}>
                 Add {participantType === 'ta' ? 'TA' : 'Student'}
               </button>
             </div>
