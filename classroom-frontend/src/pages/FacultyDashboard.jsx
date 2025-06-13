@@ -1,9 +1,8 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { UserContext } from "../context/ContextProvider";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { BookOpen, Users, LogOut, Calendar, ClipboardList, Plus, X } from 'lucide-react';
 import axios from "axios";
-import { useEffect } from "react";
 
 
 export default function FacultyDashboard() {
@@ -15,7 +14,6 @@ export default function FacultyDashboard() {
     const [createCourseLoading, setCreateCourseLoading] = useState(false);
 
     const [courses, setCourses] = useState([])
-
 
     const [activeTab, setActiveTab] = useState('courses');
 
@@ -35,12 +33,6 @@ export default function FacultyDashboard() {
 
         fetchCourses()
     }, [user.id])
-  
-    // const courses = [
-    // { id: '1', name: 'Data Structures', students: 120, tas: 4 },
-    // { id: '2', name: 'Algorithms', students: 85, tas: 3 },
-    // { id: '3', name: 'Database Systems', students: 95, tas: 3 },
-    // ];
 
     const assignments = [
     { id: '1', name: 'Binary Trees Implementation', course: 'Data Structures', dueDate: '2024-03-25', submissions: 98 },
@@ -82,8 +74,6 @@ export default function FacultyDashboard() {
             console.log("Course added to faculty: ", facultyRes.data)
 
             navigate(`/faculty/courses/${courseRes.data._id}`)
-
-
         }
         catch(err) {
             console.error("Error creating course:", err);
@@ -157,7 +147,9 @@ export default function FacultyDashboard() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {courses.map((course) => (
-                            <div key={course.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                            <div key={course._id} 
+                                onClick={() => navigate(`/faculty/courses/${course._id}`)}
+                                className="bg-white rounded-lg shadow p-6 hover:shadow-lg cursor-pointer transition-shadow">
                                 <h3 className="text-xl font-semibold text-gray-900 mb-4">{course.name}</h3>
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2 text-gray-600">
@@ -170,6 +162,7 @@ export default function FacultyDashboard() {
                                     </div>
                                 </div>
                             </div>
+    
                             ))}
                         </div>
                     </div>

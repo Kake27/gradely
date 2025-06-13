@@ -22,6 +22,7 @@ export const ContextProvider = ({children}) => {
         } else {
             localStorage.removeItem("user");
         }
+        setLoading(false)
     }, [user]);
 
     const login = (userData) => {

@@ -3,20 +3,26 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { UserContext } from "../context/ContextProvider";
 import { ArrowLeft, Users, BookOpen, ClipboardList, Upload, Plus, X, Calendar, CheckCircle, 
-        Clock,Menu,ChevronRight,UserPlus} from 'lucide-react';
+        Clock,Menu,UserPlus} from 'lucide-react';
 
 export default function FacultyCourse() {
-    const {user, logout} = useContext(UserContext);
     const navigate = useNavigate()
+    const {user, logout, loading} = useContext(UserContext);
+    
     const {courseId} = useParams()
 
-    const [courseData, setCourseData] = useState(null)
+    const [courseData, setCourseData] = useState([])
 
     const [activeTab, setActiveTab] = useState('assignments');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
     const [participantType, setParticipantType] = useState('student');
     const [showSidebar, setShowSidebar] = useState(false);
+
+
+    const [loadedCourseData, setLoadedCourseData] = useState(false)
+    const [students, setStudents] = useState([])
+    const [tas, setTas] = useState([])
 
     const [assignmentForm, setAssignmentForm] = useState({
         name: '',
@@ -28,8 +34,6 @@ export default function FacultyCourse() {
         name: '',
         email: ''
     });
-
-    const courseName = 'Data Structures';
 
     const [assignments, setAssignments] = useState([
     {
@@ -118,8 +122,8 @@ export default function FacultyCourse() {
     { id: '12', name: 'Ivy Chen', email: 'ivy.chen@student.edu', role: 'student' }
   ]);
 
-    const tas = participants.filter(p => p.role === 'ta');
-    const students = participants.filter(p => p.role === 'student');
+    // const tas = participants.filter(p => p.role === 'ta');
+    // const students = participants.filter(p => p.role === 'student');
 
     const handleBack = () => {
         navigate('/faculty');
@@ -182,31 +186,50 @@ export default function FacultyCourse() {
 
 
     useEffect(() => {
-        const fetchCourse = async () => {
-            try {
-                const res = await axios.get(`http://localhost:5000/course/getFaculty/${courseId}`)
-                
-                if(res.data.faculty._id != user.id) {
-                    navigate('/unauthorized')
-                    return
-                }
-
-                else {
-                    setCourseData(res.data)
-                }
-            }
-            catch(err) {
-                console.log("Error fetching course: ", err);
-                navigate('/unauthorized')
-                return;
-            }
+      if(loading) return;
+      const fetchCourse = async () => {
+          try {
+              const res = await axios.get(`http://localhost:5000/course/getFaculty/${courseId}`)
+              
+              if(res.data.faculty._id != user.id) {
+                  navigate('/unauthorized')
+                  return
+              }
+              setCourseData(res.data)
+              setLoadedCourseData(true)
+          }
+          catch(err) {
+              console.log("Error fetching course: ", err);
+              navigate('/unauthorized')
+              return;
+          }
         }
 
-        fetchCourse()
-    }, [courseId])
+        if(user) fetchCourse()
+
+    }, [loading, user, courseId])
+
+    useEffect(() => {
+      if(!loadedCourseData) return;
+
+      const setData = async () => {
+        try {
+          setStudents(courseData.students)
+          setTas(courseData.tas)
+
+        }
+        catch(err) {
+          console.log("Error occured while setting participant data: ", err)
+          return
+        }
+      }
+
+      if(loadedCourseData) setData()
+      
+    }, [loadedCourseData, courseData]);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -221,7 +244,7 @@ export default function FacultyCourse() {
               </button>
               <div className="h-6 w-px bg-gray-300"></div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{courseName}</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{courseData.name}</h1>
                 <p className="text-gray-600">Course Management</p>
               </div>
             </div>
