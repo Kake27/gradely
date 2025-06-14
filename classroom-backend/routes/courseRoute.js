@@ -34,14 +34,42 @@ courseRouter.post("/addTA", async(req, res) => {
         if(!courseId || !taId) return res.status(400).json({error: "Course ID and TA ID are required!"})
         
         const course = await Course.findById(courseId)
-        course.tas.push(taId)
-        await course.save()
 
-        res.status(200).json({message: "TA added to course successfully!"})
+        if(!course.tas.includes(taId)) {
+            course.tas.push(taId)
+            await course.save()
+
+            res.status(200).json({message: "TA added to course successfully!"})
+        }
+        else {
+            res.json({error: "This TA has already been assigned!"})
+        }
+
     }
     catch(err) {
         console.error("Error adding TA: ", err)
         res.status(500).json({error: "Internal Server Error"})
+    }
+})
+
+courseRouter.post("/addStudent", async (req, res) => {
+    const {courseId, studentId} = req.body
+
+    try {
+        if(!courseId || !studentId) return res.status(400).json({error: "Course ID and Student ID both are required!"})
+
+        const course = await Course.findById(courseId)
+        if(!course.students.includes(studentId)) {
+            course.students.push(studentId)
+            await course.save()
+            res.status(200).json({message: "Student added to course successfully!"})
+        }
+        else {
+            res.json({error: "This student has already been added!"})
+        }
+    }
+    catch(err) {
+
     }
 })
 

@@ -121,8 +121,6 @@ export default function FacultyCourse() {
   //   { id: '12', name: 'Ivy Chen', email: 'ivy.chen@student.edu', role: 'student' }
   // ]);
 
-    // const tas = participants.filter(p => p.role === 'ta');
-    // const students = participants.filter(p => p.role === 'student');
 
     const handleBack = () => {
         navigate('/faculty');
@@ -160,31 +158,63 @@ export default function FacultyCourse() {
                 res = await axios.get("http://localhost:5000/ta/getTAID", {
                 params: {email: email}
               })
+
+              if(!res.data) {
+                toast.error("This user hasn't registered yet!")
+                return
+              }
+
+              const taId = res.data
+              const courseRes = await axios.post("http://localhost:5000/course/addTA", {
+                courseId: courseId,
+                taId: taId
+              })
+
+              if(courseRes.data.error) {
+                toast('This TA has already been added!', {
+                  icon:'⚠️'
+                })
+                return;
+              }
+
+              const taRes = await axios.post("http://localhost:5000/ta/addCourse", {
+                courseId: courseId,
+                taId: taId
+              })
+
+              toast.success("Added TA successfully to the course!")
             }
+
             else {
               res = await axios.get("http://localhost:5000/student/getStudentID",{ 
                 params: {email: email}
               })
+              if(!res.data) {
+                toast.error("This user hasn't registered yet!")
+                return
+              }
+
+              const studentId = res.data
+              console.log(studentId)
+              const courseRes = await axios.post("http://localhost:5000/course/addStudent", {
+                courseId: courseId,
+                studentId: studentId
+              })
+
+              if(courseRes.data.error) {
+                toast('This student has already been added!', {
+                  icon:'⚠️'
+                })
+                return;
+              }
+
+              const studentRes = await axios.post("http://localhost:5000/student/addCourse", {
+                courseId: courseId,
+                studentId: studentId
+              })
+
+              toast.success("Added student successfully to the course!")
             }
-
-            if(!res.data) {
-              toast.error("This user hasn't registered yet!")
-              return
-            }
-
-            const taId = res.data
-            const courseRes = await axios.post("http://localhost:5000/course/addTA", {
-              courseId: courseId,
-              taId: taId
-            })
-
-
-            const taRes = await axios.post("http://localhost:5000/ta/addCourse", {
-              courseId: courseId,
-              taId: taId
-            })
-
-            toast.success("Added TA successfully to the course!")
           }
           catch(err) {
             console.log("Error accessing db", err);
@@ -492,7 +522,7 @@ export default function FacultyCourse() {
               </div>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {students.map((student) => (
-                  <div key={student.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                  <div key={student._id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                       {student.name.charAt(0)}
                     </div>

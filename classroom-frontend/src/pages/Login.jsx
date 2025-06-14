@@ -39,7 +39,7 @@ export default function Login() {
                         params: {email: email.toLowerCase().trim()}
                     })
 
-                    id = res.data.id
+                    id = res.data
 
                  }
                  else if(userDoc.data().role == "ta") {
@@ -47,7 +47,7 @@ export default function Login() {
                         params: {email: email.toLowerCase().trim()}
                     })
 
-                    id = res.data.id
+                    id = res.data
 
                  }
                  else if(userDoc.data().role == "student") {
@@ -55,7 +55,7 @@ export default function Login() {
                         params: {email: email.toLowerCase().trim()}
                     })
 
-                    id = res.data.id
+                    id = res.data
                  }
             }
             catch (err) {

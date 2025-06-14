@@ -21,7 +21,7 @@ facultyRouter.get("/getFacultyID", async (req, res) => {
         const {email} = req.query
         const faculty = await Faculty.findOne({email})
 
-        res.status(200).json({id: faculty._id})
+        res.status(200).json(faculty._id)
         console.log("Faculty ID retrieved successfully")
     }
     catch(err) {
