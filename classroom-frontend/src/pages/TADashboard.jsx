@@ -1,21 +1,38 @@
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/ContextProvider";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { BookOpen, ClipboardList, LogOut, CheckCircle, Users, Calendar } from "lucide-react";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function TADashboard() {
-    const {user, login, logout} = useContext(UserContext)
+    const {user, logout} = useContext(UserContext)
     const navigate = useNavigate();
-
-    const [activeTab, setActiveTab] = useState('courses');
-
     const delay = (ms) => new Promise((resolve)=>setTimeout(resolve, ms));
 
-    const courses = [
-    { id: '1', name: 'Data Structures', students: 120, faculty: 'Prof. Smith' },
-    { id: '2', name: 'Algorithms', students: 85, faculty: 'Prof. Johnson' },
-    { id: '3', name: 'Database Systems', students: 95, faculty: 'Prof. Davis' },
-    ];
+    const [courses, setCourses] = useState([])
+    const [activeTab, setActiveTab] = useState('courses');
+
+    // const courses = [
+    // { id: '1', name: 'Data Structures', students: 120, faculty: 'Prof. Smith' },
+    // { id: '2', name: 'Algorithms', students: 85, faculty: 'Prof. Johnson' },
+    // { id: '3', name: 'Database Systems', students: 95, faculty: 'Prof. Davis' },
+    // ];
+
+    useEffect(() => {
+        const fetchCourses = async() => {
+             try {
+                const res = await axios.get(`http://localhost:5000/ta/getCourses/${user.id}`)
+                setCourses(res.data.courses)
+
+            }
+            catch(err) {
+                console.log("Error loading courses: ", err);
+            }
+        }
+
+        fetchCourses()
+    }, [user.id])
 
     const assignments = [
         { id: '1', name: 'Binary Trees Implementation', course: 'Data Structures', dueDate: '2024-03-25', submissions: 98, totalStudents: 120 },
@@ -65,6 +82,7 @@ export default function TADashboard() {
 
     const handleLogout = async () => {
         navigate('/login');
+        toast.success("Logged out succesfully")
         await delay(1000)
         
         logout()
@@ -79,6 +97,7 @@ export default function TADashboard() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Toaster />
             {/* Header */}
             <header className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -142,16 +161,16 @@ export default function TADashboard() {
                 {activeTab === 'courses' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {courses.map((course) => (
-                    <div key={course.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                    <div key={course._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
                         <h3 className="text-xl font-semibold text-gray-900 mb-4">{course.name}</h3>
                         <div className="space-y-3">
                         <div className="flex items-center gap-2 text-gray-600">
                             <Users className="h-5 w-5" />
-                            <span>{course.students} Students</span>
+                            <span>{course.students.length} Student(s)</span>
                         </div>
                         <div className="flex items-center gap-2 text-gray-600">
                             <BookOpen className="h-5 w-5" />
-                            <span>Faculty: {course.faculty}</span>
+                            <span>Faculty: {course.faculty.name}</span>
                         </div>
                         </div>
                     </div>

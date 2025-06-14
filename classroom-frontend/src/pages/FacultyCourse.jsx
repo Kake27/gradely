@@ -195,7 +195,6 @@ export default function FacultyCourse() {
               }
 
               const studentId = res.data
-              console.log(studentId)
               const courseRes = await axios.post("http://localhost:5000/course/addStudent", {
                 courseId: courseId,
                 studentId: studentId

@@ -1,9 +1,9 @@
 import { Router } from "express";
 import Student from "../models/student.js";
 
-const studenRouter = Router();
+const studentRouter = Router();
 
-studenRouter.post("/createStudent", async (req, res) => {
+studentRouter.post("/createStudent", async (req, res) => {
     try {
         const student  = await Student.create(req.body);
         res.status(201).json(student)
@@ -15,7 +15,7 @@ studenRouter.post("/createStudent", async (req, res) => {
     }
 })
 
-studenRouter.get("/getStudentID", async (req, res) => {
+studentRouter.get("/getStudentID", async (req, res) => {
     try {
         const {email} = req.query
         const student = await Student.findOne({email})
@@ -31,11 +31,11 @@ studenRouter.get("/getStudentID", async (req, res) => {
     }
 })
 
-studenRouter.post("/addCourse", async (req, res) => {
+studentRouter.post("/addCourse", async (req, res) => {
     const {courseId, studentId} = req.body
 
     try {
-        if(!courseId || studentId) return res.status(400).json({error: "Course ID and Student ID both are required!"})
+        if(!courseId || !studentId) return res.status(400).json({error: "Course ID and Student ID both are required!"})
 
         const student = await Student.findById(studentId);
 
@@ -54,4 +54,26 @@ studenRouter.post("/addCourse", async (req, res) => {
     }
 })
 
-export default studenRouter
+studentRouter.get("/getCourses/:studentId", async(req, res) => {
+    try {
+        if(!req.params.studentId) return res.status(400).json({error: "Student ID required!"});
+
+        const student = await Student.findById(req.params.studentId).populate({
+            path: 'courses', 
+            populate: {
+                path: 'faculty',
+                select: 'name email'
+            }
+        })
+        if (!student) {
+            return res.status(404).json({ error: "Student not found" });
+        }
+
+        res.status(200).json({ courses: student.courses });
+    }
+    catch(err) {
+        console.error("Error getting courses: ", err)
+        res.status(500).json({ error: "Internal server error" });
+    }
+})
+export default studentRouter

@@ -68,4 +68,28 @@ taRouter.post("/addCourse", async (req, res) => {
     }
 })
 
+taRouter.get("/getCourses/:taId", async(req, res) => {
+    try {
+        if(!req.params.taId) return res.status(400).json({error: "TA ID required!"});
+
+        const ta = await TA.findById(req.params.taId).populate({
+            path: 'courses', 
+            populate: {
+                path: 'faculty',
+                select: 'name email'
+            }
+        })
+
+        if (!ta) {
+            return res.status(404).json({ error: "TA not found" });
+        }
+
+        res.status(200).json({ courses: ta.courses });
+    }
+    catch(err) {
+        console.error("Error getting courses: ", err)
+        res.status(500).json({ error: "Internal server error" });
+    }
+})
+
 export default taRouter;

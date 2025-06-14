@@ -1,24 +1,36 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../context/ContextProvider";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, Users, LogOut, Calendar, ClipboardList, Upload, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 
 
 export default function StudentDashboard() {
-    const {user, logout} = useContext(UserContext);
+    const {user, logout, loading} = useContext(UserContext);
 
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('courses');
 
+    const [courses, setCourses] = useState([])
+
     const delay = (ms) => new Promise((resolve)=>setTimeout(resolve, ms));
     
-    // Mock data - replace with actual data from your backend
-    const courses = [
-        { id: '1', name: 'Data Structures', faculty: 'Prof. Smith', credits: 3, schedule: 'MWF 10:00-11:00' },
-        { id: '2', name: 'Algorithms', faculty: 'Prof. Johnson', credits: 3, schedule: 'TTh 2:00-3:30' },
-        { id: '3', name: 'Database Systems', faculty: 'Prof. Davis', credits: 3, schedule: 'MWF 1:00-2:00' },
-        { id: '4', name: 'Software Engineering', faculty: 'Prof. Wilson', credits: 4, schedule: 'TTh 10:00-12:00' },
-    ];
+
+    useEffect(() => {
+        const fetchCourses = async() => {
+            try {
+                const res = await axios.get(`http://localhost:5000/student/getCourses/${user.id}`)
+                setCourses(res.data.courses)
+
+            }
+            catch(err) {
+                console.log("Error loading courses: ", err);
+            }
+        }
+
+        fetchCourses()
+    }, [user.id])
 
     const assignments = [
         { 
@@ -103,8 +115,8 @@ export default function StudentDashboard() {
     ];
 
     const handleLogout = async () => {
-         navigate("/login")
-
+        navigate("/login")
+        toast.success("Logged out successfully")
         await delay(1000);
         logout()
     };
@@ -149,6 +161,7 @@ export default function StudentDashboard() {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Toaster />
         {/* Header */}
         <header className="bg-white shadow">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -212,21 +225,21 @@ export default function StudentDashboard() {
             {activeTab === 'courses' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                 {courses.map((course) => (
-                <div key={course.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                <div key={course._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
                     <h3 className="text-xl font-semibold text-gray-900 mb-4">{course.name}</h3>
                     <div className="space-y-3">
                     <div className="flex items-center gap-2 text-gray-600">
                         <Users className="h-5 w-5" />
-                        <span>Instructor: {course.faculty}</span>
+                        <span><b>Instructor: </b>{course.faculty.name}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                         <BookOpen className="h-5 w-5" />
-                        <span>{course.credits} Credits</span>
+                        <span><b>{course.assignments.length}</b> Assignments</span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600">
+                    {/* <div className="flex items-center gap-2 text-gray-600">
                         <Calendar className="h-5 w-5" />
                         <span>{course.schedule}</span>
-                    </div>
+                    </div> */}
                     </div>
                 </div>
                 ))}
