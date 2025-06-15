@@ -13,11 +13,6 @@ export default function TADashboard() {
     const [courses, setCourses] = useState([])
     const [activeTab, setActiveTab] = useState('courses');
 
-    // const courses = [
-    // { id: '1', name: 'Data Structures', students: 120, faculty: 'Prof. Smith' },
-    // { id: '2', name: 'Algorithms', students: 85, faculty: 'Prof. Johnson' },
-    // { id: '3', name: 'Database Systems', students: 95, faculty: 'Prof. Davis' },
-    // ];
 
     useEffect(() => {
         const fetchCourses = async() => {
@@ -161,7 +156,9 @@ export default function TADashboard() {
                 {activeTab === 'courses' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {courses.map((course) => (
-                    <div key={course._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                    <div key={course._id}
+                    onClick={() => navigate(`/ta/courses/${course._id}`)}
+                     className="bg-white rounded-lg shadow p-6 hover:shadow-lg cursor-pointer transition-shadow">
                         <h3 className="text-xl font-semibold text-gray-900 mb-4">{course.name}</h3>
                         <div className="space-y-3">
                         <div className="flex items-center gap-2 text-gray-600">

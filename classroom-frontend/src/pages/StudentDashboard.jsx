@@ -7,7 +7,7 @@ import toast, { Toaster } from "react-hot-toast";
 
 
 export default function StudentDashboard() {
-    const {user, logout, loading} = useContext(UserContext);
+    const {user, logout} = useContext(UserContext);
 
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('courses');
@@ -22,7 +22,6 @@ export default function StudentDashboard() {
             try {
                 const res = await axios.get(`http://localhost:5000/student/getCourses/${user.id}`)
                 setCourses(res.data.courses)
-
             }
             catch(err) {
                 console.log("Error loading courses: ", err);
@@ -162,22 +161,22 @@ export default function StudentDashboard() {
     return (
         <div className="min-h-screen bg-gray-50">
             <Toaster />
-        {/* Header */}
-        <header className="bg-white shadow">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <div>
-                <h1 className="text-3xl font-bold text-gray-900">Welcome, Student</h1>
-                <p className="text-gray-600">Computer Science Department</p>
-            </div>
-            <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-                <LogOut className="h-5 w-5" />
-                Logout
-            </button>
-            </div>
-        </header>
+            {/* Header */}
+            <header className="bg-white shadow">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Welcome, Student</h1>
+                    <p className="text-gray-600">Computer Science Department</p>
+                </div>
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                    <LogOut className="h-5 w-5" />
+                    Logout
+                </button>
+                </div>
+            </header>
 
         {/* Tab Navigation */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
@@ -225,7 +224,9 @@ export default function StudentDashboard() {
             {activeTab === 'courses' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                 {courses.map((course) => (
-                <div key={course._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                <div key={course._id}
+                    onClick={()=>navigate(`/student/courses/${course._id}`)}
+                    className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer">
                     <h3 className="text-xl font-semibold text-gray-900 mb-4">{course.name}</h3>
                     <div className="space-y-3">
                     <div className="flex items-center gap-2 text-gray-600">

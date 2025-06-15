@@ -28,6 +28,35 @@ courseRouter.get("/getFaculty/:courseId", async(req, res) => {
     }
 })
 
+courseRouter.get("/getTA/:courseId", async(req, res) => {
+    try {
+        const course = await Course.findById(req.params.courseId).populate('faculty').populate('tas').populate('students')
+
+        if(!course) return res.status(404).json({error: "Course not found"})
+
+        res.json(course)
+    }
+    catch(err) {
+        console.error("Error fetching course: ", err)
+        res.status(500).json({error: "Internal Server Error"})
+    }
+})
+
+courseRouter.get("/getStudent/:courseId", async(req, res) => {
+    try {
+        const course = await Course.findById(req.params.courseId).populate('faculty').populate('tas').populate('students')
+        if(!course) return res.status(404).json({error: "Course not found"})
+
+        res.json(course)
+    }
+    catch(err) {
+        console.error("Error fetching course: ", err)
+        res.status(500).json({error: "Internal Server Error"})
+    }
+})
+
+
+
 courseRouter.post("/addTA", async(req, res) => {
     const {courseId, taId} = req.body
     try {

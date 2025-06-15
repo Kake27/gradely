@@ -11,7 +11,6 @@ export default function FacultyCourse() {
     const {user, logout, loading} = useContext(UserContext);
     
     const {courseId} = useParams()
-
     const [courseData, setCourseData] = useState([])
 
     const [activeTab, setActiveTab] = useState('assignments');
@@ -105,21 +104,6 @@ export default function FacultyCourse() {
       feedback: 'Perfect implementation with excellent documentation'
     }
   ];
-
-  // const [participants, setParticipants] = useState([
-  //   { id: '1', name: 'Sarah Wilson', email: 'sarah.wilson@university.edu', role: 'ta' },
-  //   { id: '2', name: 'Mike Chen', email: 'mike.chen@university.edu', role: 'ta' },
-  //   { id: '3', name: 'Emily Rodriguez', email: 'emily.rodriguez@university.edu', role: 'ta' },
-  //   { id: '4', name: 'Alice Johnson', email: 'alice.johnson@student.edu', role: 'student' },
-  //   { id: '5', name: 'Bob Smith', email: 'bob.smith@student.edu', role: 'student' },
-  //   { id: '6', name: 'Carol Davis', email: 'carol.davis@student.edu', role: 'student' },
-  //   { id: '7', name: 'David Wilson', email: 'david.wilson@student.edu', role: 'student' },
-  //   { id: '8', name: 'Emma Brown', email: 'emma.brown@student.edu', role: 'student' },
-  //   { id: '9', name: 'Frank Miller', email: 'frank.miller@student.edu', role: 'student' },
-  //   { id: '10', name: 'Grace Lee', email: 'grace.lee@student.edu', role: 'student' },
-  //   { id: '11', name: 'Henry Taylor', email: 'henry.taylor@student.edu', role: 'student' },
-  //   { id: '12', name: 'Ivy Chen', email: 'ivy.chen@student.edu', role: 'student' }
-  // ]);
 
 
     const handleBack = () => {
@@ -255,6 +239,7 @@ export default function FacultyCourse() {
                   return
               }
               setCourseData(res.data)
+              
               setTas(res.data.tas)
               setStudents(res.data.students)
 

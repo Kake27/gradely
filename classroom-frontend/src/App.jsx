@@ -10,6 +10,8 @@ import SignUp from './pages/SignUp'
 import TADashboard from './pages/TADashboard'
 import Unauthorized from './pages/Unauthorized'
 import FacultyCourse from './pages/FacultyCourse'
+import TACourse from './pages/TACourse'
+import StudentCourse from './pages/StudentCourse'
 
 
 const App = () => (
@@ -39,6 +41,8 @@ const App = () => (
       } />
 
       <Route path='/faculty/courses/:courseId' element={<FacultyCourse />} />
+      <Route path='/ta/courses/:courseId' element={<TACourse />} />
+      <Route path='/student/courses/:courseId' element={<StudentCourse />} />
 
       <Route path="/unauthorized" element={<Unauthorized />} />
 
