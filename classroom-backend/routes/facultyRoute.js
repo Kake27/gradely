@@ -64,6 +64,24 @@ facultyRouter.get("/getCourses/:facultyId", async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 })
+
+facultyRouter.post("/addAssignment", async (req, res) => {
+    const {facultyId, assignmentId} = req.body;
+    try {
+        if(!facultyId || !assignmentId) return res.status(400).json({error: "Faculty ID and Assignment ID both are required!"});
+
+        const faculty = await Faculty.findById(facultyId)
+
+        faculty.assignments.push(assignmentId);
+        await faculty.save()
+        res.status(200).json({ message: "Assignment added to faculty successfully", faculty });
+        
+    }
+    catch(err) {
+        console.error("Error adding assignment to faculty: ", err)
+        res.status(500).json({ error: "Internal server error" });
+    }
+})
  
 
 export default facultyRouter

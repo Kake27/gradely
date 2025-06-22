@@ -56,7 +56,6 @@ courseRouter.get("/getStudent/:courseId", async(req, res) => {
 })
 
 
-
 courseRouter.post("/addTA", async(req, res) => {
     const {courseId, taId} = req.body
     try {
@@ -99,6 +98,38 @@ courseRouter.post("/addStudent", async (req, res) => {
     }
     catch(err) {
 
+    }
+})
+
+courseRouter.post("/addAssignment", async (req, res) => {
+    const {courseId, assignmentId} = req.body
+    try{
+        if(!courseId || !assignmentId) return res.status(400).json({error: "Course ID and Assignment ID both are required!"})
+        
+        const course = await Course.findById(courseId)
+        course.assignments.push(assignmentId)
+        await course.save()
+        res.status(200).json({message: "Assignment added to course successfully!"});
+
+    }
+    catch(err) {
+        console.error("Error adding assignment: ", err)
+        res.status(500).json({error: "Internal Server Error"})
+    }
+})
+
+courseRouter.get("/getAssignments/:courseId", async(req, res) => {
+    try {
+        if(!req.params.courseId) return res.status(400).json({error: "Course ID is required"})
+        
+        const course = await Course.findById(req.params.courseId).populate('assignments')
+        if(!course) return res.status(404).json({error: "Course not found"})
+
+        res.status(200).json({assignments: course.assignments})
+    }
+    catch(err) {
+        console.error("Error fetching assignments: ", err)
+        res.status(500).json({error: "Internal Server Error"})
     }
 })
 

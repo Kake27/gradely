@@ -2,7 +2,8 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { UserContext } from "../context/ContextProvider";
-import { ArrowLeft, Users, BookOpen, ClipboardList, Upload, Plus, X, Calendar, CheckCircle, Clock,Menu,UserPlus} from 'lucide-react';
+import { ArrowLeft, Users, BookOpen, ClipboardList, Upload, Plus, X, Calendar, CheckCircle,Clock, Menu, 
+  UserPlus, Paperclip, FileText, Eye} from 'lucide-react';
 
 import toast, {Toaster} from "react-hot-toast";
 
@@ -12,6 +13,8 @@ export default function FacultyCourse() {
     
     const {courseId} = useParams()
     const [courseData, setCourseData] = useState([])
+    const [students, setStudents] = useState([])
+    const [tas, setTas] = useState([])
 
     const [activeTab, setActiveTab] = useState('assignments');
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -19,40 +22,23 @@ export default function FacultyCourse() {
     const [participantType, setParticipantType] = useState('student');
     const [showSidebar, setShowSidebar] = useState(false);
 
-    const [students, setStudents] = useState([])
-    const [tas, setTas] = useState([])
 
+
+    const [uploading, setUploading] = useState(false)
+    const [assignments, setAssignments] = useState([]);
     const [assignmentForm, setAssignmentForm] = useState({
         name: '',
         description: '',
         dueDate: '',
-        maxPoints: ''
-    });
-    const [participantForm, setParticipantForm] = useState({
-        name: '',
-        email: ''
+        maxPoints: '',
+        pdfFile: File
     });
 
-    const [assignments, setAssignments] = useState([
-    {
-      id: '1',
-      name: 'Binary Trees Implementation',
-      description: 'Implement binary search tree with insert, delete, and search operations',
-      dueDate: '2024-03-25',
-      maxPoints: 100,
-      submissions: 98,
-      totalStudents: 120
-    },
-    {
-      id: '2',
-      name: 'Linked List Operations',
-      description: 'Create a doubly linked list with various operations',
-      dueDate: '2024-04-05',
-      maxPoints: 80,
-      submissions: 45,
-      totalStudents: 120
-    }
-  ]);
+
+    const [participantForm, setParticipantForm] = useState({email: ''});
+
+    const [showPdfViewer, setShowPdfViewer] = useState(false);
+    const [selectedPdfUrl, setSelectedPdfUrl] = useState('');
 
   const submissions = [
     {
@@ -105,26 +91,83 @@ export default function FacultyCourse() {
     }
   ];
 
+  function PdfViewer({ pdfUrl }) {
+    return (
+      <iframe
+        src={pdfUrl}
+        title="Assignment PDF"
+        width="100%"
+        height="600px"
+        style={{ border: "none", borderRadius: "8px" }}
+      ></iframe>
+    );
+  }
+
 
     const handleBack = () => {
         navigate('/faculty');
     };
 
-    const handleCreateAssignment = () => {
+    const handleCreateAssignment = async() => {
         if (assignmentForm.name.trim() && assignmentForm.dueDate && assignmentForm.maxPoints) {
-        const newAssignment = {
-            id: (assignments.length + 1).toString(),
-            name: assignmentForm.name.trim(),
-            description: assignmentForm.description.trim(),
-            dueDate: assignmentForm.dueDate,
-            maxPoints: parseInt(assignmentForm.maxPoints),
-            submissions: 0,
-            totalStudents: students.length
-        };
-        
-        setAssignments([...assignments, newAssignment]);
-        setAssignmentForm({ name: '', description: '', dueDate: '', maxPoints: '' });
-        setShowCreateModal(false);
+            setUploading(true);
+            let pdfUrl = '';
+
+            if(assignmentForm.pdfFile) {
+              const formData = new FormData();
+                formData.append('file', assignmentForm.pdfFile);
+                formData.append('upload_preset', 'gradely-assignments'); 
+
+                try {
+                    const cloudinaryRes = await axios.post(
+                      `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/auto/upload`,
+                      formData
+                    );
+                    pdfUrl = cloudinaryRes.data.secure_url;
+                    console.log("Pdf uploaded successfully: ", pdfUrl)
+
+                } catch (err) {
+                    toast.error('Failed to upload PDF to Cloudinary');
+                    setUploading(false);
+                    return;
+                }
+            }
+
+             const newAssignment = {
+              title: assignmentForm.name.trim(),
+              description: assignmentForm.description.trim(),
+              url: pdfUrl,
+              courseId: courseId, 
+              marks: assignmentForm.maxPoints ? parseInt(assignmentForm.maxPoints) : 100,
+              dueDate: assignmentForm.dueDate,
+              maxPoints: parseInt(assignmentForm.maxPoints),
+             
+            };
+
+
+            try {
+                const assignmentRes = await axios.post('http://localhost:5000/assignment/createAssignment', newAssignment);
+                const assignmentId = assignmentRes.data._id;
+
+                const courseRes = await axios.post(`http://localhost:5000/course/addAssignment`, {
+                  courseId: courseId,
+                  assignmentId: assignmentId
+                })
+
+                if(courseRes.data.error) {
+                    toast.error("Error occured while adding assignment to course!");
+                    return;
+                }
+
+                toast.success('Assignment created successfully!');
+    
+                setAssignmentForm({ name: '', description: '', dueDate: '', maxPoints: '', pdfFile: null });
+                setShowCreateModal(false);
+            } catch (err) {
+                toast.error('Failed to create assignment: ', err);
+            }
+
+            setUploading(false);
         }
     };
 
@@ -133,6 +176,17 @@ export default function FacultyCourse() {
         setShowCreateModal(false);
     };
 
+    const handleFileUpload = (event) => {
+      const file = event.target.files?.[0];
+      if (file && file.type === 'application/pdf') {
+        setAssignmentForm({ ...assignmentForm, pdfFile: file });
+      } else if (file) {
+        alert('Please select a PDF file only.');
+        event.target.value = '';
+      }
+  };
+
+    // Add participant routes
     const handleAddParticipant = async () => {
         const email = participantForm.email.trim()
         if (email) {
@@ -204,8 +258,7 @@ export default function FacultyCourse() {
             return;
           }
 
-        // setParticipants([...participants, newParticipant]);
-        setParticipantForm({ name: '', email: '' });
+        setParticipantForm({ email: '' });
         setShowAddParticipantModal(false);
         }
     };
@@ -220,6 +273,17 @@ export default function FacultyCourse() {
         setShowAddParticipantModal(true);
     };
 
+    //PDF Viewing Functionality
+    const handleViewPdf = (pdfUrl) => {
+      setSelectedPdfUrl(pdfUrl);
+      setShowPdfViewer(true);
+  };
+
+    const handleClosePdfViewer = () => {
+      setShowPdfViewer(false);
+      setSelectedPdfUrl('');
+    };
+
     const getGradeColor = (grade) => {
         if (grade.startsWith('A')) return 'text-green-600 bg-green-100';
         if (grade.startsWith('B')) return 'text-blue-600 bg-blue-100';
@@ -228,6 +292,7 @@ export default function FacultyCourse() {
     };
 
 
+    // Fetching data on load
     useEffect(() => {
       if(loading) return;
       const fetchCourse = async () => {
@@ -242,6 +307,9 @@ export default function FacultyCourse() {
               
               setTas(res.data.tas)
               setStudents(res.data.students)
+
+              const assignmentRes = await axios.get(`http://localhost:5000/course/getAssignments/${courseId}`);
+              setAssignments(assignmentRes.data.assignments)
 
           }
           catch(err) {
@@ -339,29 +407,46 @@ export default function FacultyCourse() {
                 {/* Assignments List */}
                 <div className="space-y-4">
                   {assignments.map((assignment) => (
-                    <div key={assignment.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                    <div key={assignment._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{assignment.name}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{assignment.title}</h3>
                           <p className="text-gray-600 mb-3">{assignment.description}</p>
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <span className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
                               Due: {new Date(assignment.dueDate).toLocaleDateString()}
                             </span>
-                            <span>Max Points: {assignment.maxPoints}</span>
-                            <span>Submissions: {assignment.submissions}/{assignment.totalStudents}</span>
+                            <span>Max Points: {assignment.marks}</span>
+                            <span>Submissions: {assignment.submissions.length}/{students.length}</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            {assignment.url && (
+                              <div className="flex items-center gap-2 text-sm text-blue-600">
+                                <FileText className="h-4 w-4" />
+                                <span>Assignment PDF: {assignment.title}</span>
+                              </div>
+                            )}
+                            {assignment.url && (
+                              <button
+                                onClick={() => handleViewPdf(assignment.url)}
+                                className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors text-sm"
+                              >
+                                <Eye className="h-4 w-4" />
+                                View PDF
+                              </button>
+                            )}
                           </div>
                         </div>
                         <div className="ml-4">
                           <div className="w-24 bg-gray-200 rounded-full h-2 mb-1">
                             <div 
                               className="bg-blue-600 h-2 rounded-full" 
-                              style={{ width: `${(assignment.submissions / assignment.totalStudents) * 100}%` }}
+                              style={{ width: `${(assignment.submissions.length / students.length) * 100}%` }}
                             ></div>
                           </div>
                           <span className="text-xs text-gray-500">
-                            {Math.round((assignment.submissions / assignment.totalStudents) * 100)}% submitted
+                            {Math.round((assignment.submissions.length / students.length) * 100)}% submitted
                           </span>
                         </div>
                       </div>
@@ -551,7 +636,7 @@ export default function FacultyCourse() {
                   </div>
                   <div className="space-y-2">
                     {tas.map((ta) => (
-                      <div key={ta.id} className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg">
+                      <div key={ta._id} className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg">
                         <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                           {ta.name.charAt(0)}
                         </div>
@@ -581,7 +666,7 @@ export default function FacultyCourse() {
                   </div>
                   <div className="space-y-2">
                     {students.map((student) => (
-                      <div key={student.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div key={student._id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                           {student.name.charAt(0)}
                         </div>
@@ -599,10 +684,33 @@ export default function FacultyCourse() {
         </div>
       </div>
 
+      {/* PDF Viewer Modal */}
+      {showPdfViewer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Assignment PDF</h3>
+              <button
+                onClick={handleClosePdfViewer}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <PdfViewer pdfUrl={selectedPdfUrl} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Create Assignment Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50  flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl h-4/5 max-w-md w-full mx-4 overflow-y-scroll">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">Upload New Assignment</h3>
@@ -647,7 +755,7 @@ export default function FacultyCourse() {
 
               <div>
                 <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  Due Date *
+                  Due Date 
                 </label>
                 <input
                   type="date"
@@ -660,7 +768,7 @@ export default function FacultyCourse() {
 
               <div>
                 <label htmlFor="maxPoints" className="block text-sm font-medium text-gray-700 mb-2">
-                  Maximum Points *
+                  Marks * 
                 </label>
                 <input
                   type="number"
@@ -671,6 +779,44 @@ export default function FacultyCourse() {
                   min="1"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
+              </div>
+                            <div>
+                <label htmlFor="pdfFile" className="block text-sm font-medium text-gray-700 mb-2">
+                  Assignment PDF
+                </label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    id="pdfFile"
+                    accept=".pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="pdfFile"
+                    className="flex items-center justify-center w-full px-3 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                  >
+                    <div className="text-center">
+                      <Paperclip className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600">
+                        {assignmentForm.pdfFile ? assignmentForm.pdfFile.name : 'Click to upload PDF file'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">PDF files only</p>
+                    </div>
+                  </label>
+                </div>
+                {assignmentForm.pdfFile && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
+                    <FileText className="h-4 w-4" />
+                    <span>File selected: {assignmentForm.pdfFile.name}</span>
+                    <button
+                      onClick={() => setAssignmentForm({ ...assignmentForm, pdfFile: null })}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -687,7 +833,7 @@ export default function FacultyCourse() {
                 disabled={!assignmentForm.name.trim() || !assignmentForm.dueDate || !assignmentForm.maxPoints}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                Upload Assignment
+                {uploading ? (  <span className="inline-block w-5 h-5 border-2 border-white border-t-blue-500 rounded-full animate-spin"></span>) : 'Upload Assignment'}
               </button>
             </div>
           </div>
