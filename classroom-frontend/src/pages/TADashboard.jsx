@@ -6,19 +6,27 @@ import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function TADashboard() {
-    const {user, logout} = useContext(UserContext)
+    const {user, loading, logout} = useContext(UserContext)
     const navigate = useNavigate();
     const delay = (ms) => new Promise((resolve)=>setTimeout(resolve, ms));
 
     const [courses, setCourses] = useState([])
     const [activeTab, setActiveTab] = useState('courses');
 
+    const [assignments, setAssignments] = useState([])
+
 
     useEffect(() => {
+        if(loading) return;
         const fetchCourses = async() => {
              try {
                 const res = await axios.get(`http://localhost:5000/ta/getCourses/${user.id}`)
+
                 setCourses(res.data.courses)
+                const courses = res.data.courses
+
+                const allAssignments = courses.flatMap(course => course.assignments || []);
+                setAssignments(allAssignments)
 
             }
             catch(err) {
@@ -26,15 +34,8 @@ export default function TADashboard() {
             }
         }
 
-        fetchCourses()
+        if(user) fetchCourses()
     }, [user.id])
-
-    const assignments = [
-        { id: '1', name: 'Binary Trees Implementation', course: 'Data Structures', dueDate: '2024-03-25', submissions: 98, totalStudents: 120 },
-        { id: '2', name: 'Sorting Algorithms', course: 'Algorithms', dueDate: '2024-03-28', submissions: 75, totalStudents: 85 },
-        { id: '3', name: 'SQL Queries', course: 'Database Systems', dueDate: '2024-03-30', submissions: 85, totalStudents: 95 },
-        { id: '4', name: 'Graph Traversal', course: 'Algorithms', dueDate: '2024-04-02', submissions: 60, totalStudents: 85 },
-    ];
 
     const checkedSolutions = [
         { 
@@ -199,12 +200,12 @@ export default function TADashboard() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {assignments.map((assignment) => (
-                        <tr key={assignment.id} className="hover:bg-gray-50">
+                        <tr key={assignment._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {assignment.name}
+                            {assignment.title}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {assignment.course}
+                            {assignment.course.name}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex items-center gap-2">
@@ -213,17 +214,17 @@ export default function TADashboard() {
                             </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {assignment.submissions} / {assignment.totalStudents}
+                            {assignment.submissions.length} / {assignment.course.students.length}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                             <div className="w-full bg-gray-200 rounded-full h-2">
                                 <div 
                                 className="bg-blue-600 h-2 rounded-full" 
-                                style={{ width: `${(assignment.submissions / assignment.totalStudents) * 100}%` }}
+                                style={{ width: `${(assignment.submissions.length / assignment.course.students.length) * 100}%` }}
                                 ></div>
                             </div>
                             <span className="text-xs text-gray-500 mt-1">
-                                {Math.round((assignment.submissions / assignment.totalStudents) * 100)}%
+                                {Math.round((assignment.submissions.length / assignment.course.students.length) * 100)}%
                             </span>
                             </td>
                         </tr>

@@ -22,6 +22,8 @@ export default function StudentCourse() {
     const [tas, setTas] = useState([])
     const [students, setStudents] = useState([])
 
+    const [assignments, setAssignments] = useState([])
+
     useEffect(() => {
         if(loading) return;
         const fetchCourses = async() => {
@@ -35,10 +37,12 @@ export default function StudentCourse() {
               }
 
               setCourseData(res.data)
-
               setFaculty(res.data.faculty)
               setTas(res.data.tas)
               setStudents(res.data.students)
+
+              const assignmentRes = await axios.get(`http://localhost:5000/student/getCourseAssignments/${courseId}`)
+              setAssignments(assignmentRes.data.assignments)
 
           }
           catch(err) {
@@ -52,50 +56,49 @@ export default function StudentCourse() {
 
     }, [loading, user, courseId])
     // Mock data - replace with actual data from your backend
-    const courseName = 'Data Structures'; // This would come from API based on courseId
     
-    const assignments = [
-        {
-        id: '1',
-        name: 'Binary Trees Implementation',
-        description: 'Implement binary search tree with insert, delete, and search operations',
-        dueDate: '2024-03-25',
-        maxPoints: 100,
-        uploadedDate: '2024-03-10',
-        uploadedBy: 'Prof. Smith',
-        status: 'submitted'
-        },
-        {
-        id: '2',
-        name: 'Linked List Operations',
-        description: 'Create a doubly linked list with various operations',
-        dueDate: '2024-04-05',
-        maxPoints: 80,
-        uploadedDate: '2024-03-15',
-        uploadedBy: 'Prof. Smith',
-        status: 'pending'
-        },
-        {
-        id: '3',
-        name: 'Graph Algorithms',
-        description: 'Implement BFS and DFS traversal algorithms',
-        dueDate: '2024-04-15',
-        maxPoints: 120,
-        uploadedDate: '2024-03-20',
-        uploadedBy: 'Prof. Smith',
-        status: 'pending'
-        },
-        {
-        id: '4',
-        name: 'Hash Tables',
-        description: 'Implement hash table with collision resolution',
-        dueDate: '2024-03-20',
-        maxPoints: 90,
-        uploadedDate: '2024-03-05',
-        uploadedBy: 'Prof. Smith',
-        status: 'overdue'
-        }
-    ];
+    // const assignments = [
+    //     {
+    //     id: '1',
+    //     name: 'Binary Trees Implementation',
+    //     description: 'Implement binary search tree with insert, delete, and search operations',
+    //     dueDate: '2024-03-25',
+    //     maxPoints: 100,
+    //     uploadedDate: '2024-03-10',
+    //     uploadedBy: 'Prof. Smith',
+    //     status: 'submitted'
+    //     },
+    //     {
+    //     id: '2',
+    //     name: 'Linked List Operations',
+    //     description: 'Create a doubly linked list with various operations',
+    //     dueDate: '2024-04-05',
+    //     maxPoints: 80,
+    //     uploadedDate: '2024-03-15',
+    //     uploadedBy: 'Prof. Smith',
+    //     status: 'pending'
+    //     },
+    //     {
+    //     id: '3',
+    //     name: 'Graph Algorithms',
+    //     description: 'Implement BFS and DFS traversal algorithms',
+    //     dueDate: '2024-04-15',
+    //     maxPoints: 120,
+    //     uploadedDate: '2024-03-20',
+    //     uploadedBy: 'Prof. Smith',
+    //     status: 'pending'
+    //     },
+    //     {
+    //     id: '4',
+    //     name: 'Hash Tables',
+    //     description: 'Implement hash table with collision resolution',
+    //     dueDate: '2024-03-20',
+    //     maxPoints: 90,
+    //     uploadedDate: '2024-03-05',
+    //     uploadedBy: 'Prof. Smith',
+    //     status: 'overdue'
+    //     }
+    // ];
 
     const submissions = [
         {
@@ -148,7 +151,7 @@ export default function StudentCourse() {
         }
     ];
 
-    const pendingAssignments = assignments.filter(a => a.status === 'pending' || a.status === 'overdue');
+    // const pendingAssignments = assignments.filter(a => a.status === 'pending' || a.status === 'overdue');
 
     const handleBack = () => {
         navigate('/student');
@@ -291,7 +294,7 @@ export default function StudentCourse() {
                   } flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                 >
                   <Clock className="h-5 w-5" />
-                  Pending ({pendingAssignments.length})
+                  Pending 10
                 </button>
               </nav>
             </div>
@@ -302,15 +305,15 @@ export default function StudentCourse() {
                 <h2 className="text-2xl font-semibold text-gray-900 mb-6">All Course Assignments</h2>
                 <div className="space-y-4">
                   {assignments.map((assignment) => (
-                    <div key={assignment.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                    <div key={assignment._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">{assignment.name}</h3>
-                            {getStatusIcon(assignment.status)}
+                            <h3 className="text-lg font-semibold text-gray-900">{assignment.title}</h3>
+                            {/* {getStatusIcon(assignment.status)}
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
                               {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
-                            </span>
+                            </span> */}
                           </div>
                           <p className="text-gray-600 mb-3">{assignment.description}</p>
                           <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -320,9 +323,9 @@ export default function StudentCourse() {
                             </span>
                             <span className="flex items-center gap-1">
                               <User className="h-4 w-4" />
-                              Uploaded by: {assignment.uploadedBy}
+                              Uploaded by: Prof. {assignment.course.faculty.name}
                             </span>
-                            <span>Max Points: {assignment.maxPoints}</span>
+                            <span>Max Points: {assignment.marks}</span>
                           </div>
                         </div>
                         {assignment.status === 'pending' && (

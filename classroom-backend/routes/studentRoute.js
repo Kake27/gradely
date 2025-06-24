@@ -1,5 +1,7 @@
 import { Router } from "express";
 import Student from "../models/student.js";
+import Course from "../models/courses.js";
+import Assignment from "../models/assignment.js";
 
 const studentRouter = Router();
 
@@ -60,10 +62,14 @@ studentRouter.get("/getCourses/:studentId", async(req, res) => {
 
         const student = await Student.findById(req.params.studentId).populate({
             path: 'courses', 
-            populate: {
+            populate: [{
                 path: 'faculty',
-                select: 'name email'
-            }
+                select: 'name email'},
+                {
+                    path: 'assignments'
+                }
+
+            ]
         })
         if (!student) {
             return res.status(404).json({ error: "Student not found" });
@@ -76,4 +82,30 @@ studentRouter.get("/getCourses/:studentId", async(req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 })
-export default studentRouter
+
+studentRouter.get("/getCourseAssignments/:courseId", async (req, res) => {
+    try {
+        if(!req.params.courseId) return res.status(400).json({error: "Course ID required!"});
+
+        const assignments = await Assignment.find({course: req.params.courseId}).populate({
+            path: 'course',
+            populate: {
+                path: 'faculty',
+                select: 'name'
+            }
+        })
+
+        if (!assignments) {
+            return res.status(404).json({ error: "Student not found" });
+        }
+
+        res.status(200).json({ assignments: assignments });
+    }
+    catch(err) {
+        console.error("Error getting assignments: ", err)
+        res.status(500).json({ error: "Internal server error" });
+    }
+})
+
+
+export default studentRouter;

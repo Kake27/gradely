@@ -65,6 +65,29 @@ facultyRouter.get("/getCourses/:facultyId", async (req, res) => {
     }
 })
 
+facultyRouter.get("/getAssignments/:facultyId", async (req, res) => {
+     try {
+        if(!req.params.facultyId) return res.status(400).json({error: "Faculty ID required!"});
+
+        const faculty = await Faculty.findById(req.params.facultyId).populate({
+            path: 'assignments',
+            populate: {
+                path: 'course',
+                select: 'name students'
+            }
+        })
+        if (!faculty) {
+            return res.status(404).json({ error: "Faculty not found" });
+        }
+
+        res.status(200).json({ assignments: faculty.assignments });
+    }
+    catch(err) {
+        console.error("Error getting courses: ", err)
+        res.status(500).json({ error: "Internal server error" });
+    }
+})
+
 facultyRouter.post("/addAssignment", async (req, res) => {
     const {facultyId, assignmentId} = req.body;
     try {

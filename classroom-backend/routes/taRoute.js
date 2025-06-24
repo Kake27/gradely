@@ -74,10 +74,18 @@ taRouter.get("/getCourses/:taId", async(req, res) => {
 
         const ta = await TA.findById(req.params.taId).populate({
             path: 'courses', 
-            populate: {
+            populate:[ {
                 path: 'faculty',
                 select: 'name email'
-            }
+            },
+            {
+                path: 'assignments', 
+                select: 'title course dueDate submissions',
+                populate: {
+                    path: 'course',
+                    select: 'name students',
+                }
+            }]
         })
 
         if (!ta) {

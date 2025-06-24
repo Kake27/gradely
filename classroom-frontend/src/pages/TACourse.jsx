@@ -20,6 +20,8 @@ export default function TACourse() {
     const [students, setStudents] = useState([])
     const [tas, setTas] = useState([])
 
+    // const [assignments, setAssignments] = useState([])
+
     useEffect(() => {
         if(loading) return;
         const fetchCourses = async() => {
@@ -31,7 +33,7 @@ export default function TACourse() {
                   navigate('/unauthorized')
                   return
               }
-
+              console.log("Course data fetched successfully: ", res.data);
               setCourseData(res.data)
 
               setFaculty(res.data.faculty)

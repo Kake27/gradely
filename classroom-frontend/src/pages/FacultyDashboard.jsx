@@ -7,38 +7,38 @@ import axios from "axios";
 
 export default function FacultyDashboard() {
     const navigate = useNavigate()
-    const {user, logout} = useContext(UserContext);
+    const {user, loading, logout} = useContext(UserContext);
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [courseName, setCourseName] = useState('');
     const [createCourseLoading, setCreateCourseLoading] = useState(false);
 
     const [courses, setCourses] = useState([])
+    const [assignments, setAssignments] = useState([]);
 
     const [activeTab, setActiveTab] = useState('courses');
 
     const delay = (ms) => new Promise((resolve)=>setTimeout(resolve, ms));
 
     useEffect(() => {
+        if(loading) return;
         const fetchCourses = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/faculty/getCourses/${user.id}`)
-                setCourses(res.data.courses)
+                const courseRes = await axios.get(`http://localhost:5000/faculty/getCourses/${user.id}`)
+                setCourses(courseRes.data.courses)
 
+
+                const assignmentRes = await axios.get(`http://localhost:5000/faculty/getAssignments/${user.id}`)
+                setAssignments(assignmentRes.data.assignments)
             }
             catch(err) {
                 console.log("Error loading courses: ", err);
             }
         };
 
-        fetchCourses()
+        if(user) fetchCourses()
     }, [user.id])
 
-    const assignments = [
-    { id: '1', name: 'Binary Trees Implementation', course: 'Data Structures', dueDate: '2024-03-25', submissions: 98 },
-    { id: '2', name: 'Sorting Algorithms', course: 'Algorithms', dueDate: '2024-03-28', submissions: 75 },
-    { id: '3', name: 'SQL Queries', course: 'Database Systems', dueDate: '2024-03-30', submissions: 85 },
-    ];
 
     const handleLogout = async () => {
         navigate("/login")
@@ -48,7 +48,6 @@ export default function FacultyDashboard() {
     }
 
     const handleCreateCourse = async () => {
-        // setCreateCourseLoading(true)
         try {
             const courseRes = await axios.post("http://localhost:5000/course/createCourse", {
                 name: courseName,
@@ -188,12 +187,12 @@ export default function FacultyDashboard() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {assignments.map((assignment) => (
-                        <tr key={assignment.id} className="hover:bg-gray-50">
+                        <tr key={assignment._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {assignment.name}
+                            {assignment.title}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {assignment.course}
+                            {assignment.course.name}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex items-center gap-2">
@@ -202,7 +201,7 @@ export default function FacultyDashboard() {
                             </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {assignment.submissions} / {courses.find(c => c.name === assignment.course)?.students}
+                            {assignment.submissions.length} / {assignment.course.students.length}
                             </td>
                         </tr>
                         ))}

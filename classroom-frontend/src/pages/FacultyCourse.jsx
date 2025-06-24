@@ -159,6 +159,16 @@ export default function FacultyCourse() {
                     return;
                 }
 
+                const facultyRes = await axios.post(`http://localhost:5000/faculty/addAssignment`, {
+                  facultyId: user.id,
+                  assignmentId: assignmentId
+                })
+
+                if(facultyRes.data.error) {
+                    toast.error("Error occured while adding assignment to faculty!");
+                    return;
+                }
+
                 toast.success('Assignment created successfully!');
     
                 setAssignmentForm({ name: '', description: '', dueDate: '', maxPoints: '', pdfFile: null });

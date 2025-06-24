@@ -8,11 +8,11 @@ import toast, { Toaster } from "react-hot-toast";
 
 export default function StudentDashboard() {
     const {user, logout} = useContext(UserContext);
-
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('courses');
 
     const [courses, setCourses] = useState([])
+    const [assignments, setAssignments] = useState([]);
 
     const delay = (ms) => new Promise((resolve)=>setTimeout(resolve, ms));
     
@@ -22,53 +22,58 @@ export default function StudentDashboard() {
             try {
                 const res = await axios.get(`http://localhost:5000/student/getCourses/${user.id}`)
                 setCourses(res.data.courses)
+                setAssignments(res.data.courses.flatMap(course => 
+                    (course.assignments || []).map(assignment => ({
+                        ...assignment,
+                        courseName: course.name
+                    }))
+                ));
             }
             catch(err) {
                 console.log("Error loading courses: ", err);
             }
         }
-
         fetchCourses()
     }, [user.id])
 
-    const assignments = [
-        { 
-        id: '1', 
-        name: 'Binary Trees Implementation', 
-        course: 'Data Structures', 
-        dueDate: '2024-03-25', 
-        description: 'Implement binary search tree with insert, delete, and search operations',
-        maxPoints: 100,
-        status: 'pending'
-        },
-        { 
-        id: '2', 
-        name: 'Sorting Algorithms Analysis', 
-        course: 'Algorithms', 
-        dueDate: '2024-03-28', 
-        description: 'Compare time complexity of different sorting algorithms',
-        maxPoints: 80,
-        status: 'pending'
-        },
-        { 
-        id: '3', 
-        name: 'SQL Query Optimization', 
-        course: 'Database Systems', 
-        dueDate: '2024-03-20', 
-        description: 'Optimize given SQL queries for better performance',
-        maxPoints: 90,
-        status: 'overdue'
-        },
-        { 
-        id: '4', 
-        name: 'Project Proposal', 
-        course: 'Software Engineering', 
-        dueDate: '2024-04-05', 
-        description: 'Submit detailed project proposal with timeline',
-        maxPoints: 50,
-        status: 'submitted'
-        },
-    ];
+    // const assignments = [
+    //     { 
+    //     id: '1', 
+    //     name: 'Binary Trees Implementation', 
+    //     course: 'Data Structures', 
+    //     dueDate: '2024-03-25', 
+    //     description: 'Implement binary search tree with insert, delete, and search operations',
+    //     maxPoints: 100,
+    //     status: 'pending'
+    //     },
+    //     { 
+    //     id: '2', 
+    //     name: 'Sorting Algorithms Analysis', 
+    //     course: 'Algorithms', 
+    //     dueDate: '2024-03-28', 
+    //     description: 'Compare time complexity of different sorting algorithms',
+    //     maxPoints: 80,
+    //     status: 'pending'
+    //     },
+    //     { 
+    //     id: '3', 
+    //     name: 'SQL Query Optimization', 
+    //     course: 'Database Systems', 
+    //     dueDate: '2024-03-20', 
+    //     description: 'Optimize given SQL queries for better performance',
+    //     maxPoints: 90,
+    //     status: 'overdue'
+    //     },
+    //     { 
+    //     id: '4', 
+    //     name: 'Project Proposal', 
+    //     course: 'Software Engineering', 
+    //     dueDate: '2024-04-05', 
+    //     description: 'Submit detailed project proposal with timeline',
+    //     maxPoints: 50,
+    //     status: 'submitted'
+    //     },
+    // ];
 
     const submissions = [
         { 
@@ -250,27 +255,27 @@ export default function StudentDashboard() {
             {activeTab === 'assignments' && (
             <div className="space-y-4">
                 {assignments.map((assignment) => (
-                <div key={assignment.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                <div key={assignment._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
                     <div className="flex items-start justify-between">
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{assignment.name}</h3>
-                        {getStatusIcon(assignment.status)}
+                        <h3 className="text-lg font-semibold text-gray-900">{assignment.title}</h3>
+                        {/* {getStatusIcon(assignment.status)}
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
                             {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
-                        </span>
+                        </span> */}
                         </div>
                         <p className="text-gray-600 mb-3">{assignment.description}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                         <span className="flex items-center gap-1">
                             <BookOpen className="h-4 w-4" />
-                            {assignment.course}
+                            {assignment.courseName}
                         </span>
                         <span className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
                             Due: {new Date(assignment.dueDate).toLocaleDateString()}
                         </span>
-                        <span>Max Points: {assignment.maxPoints}</span>
+                        <span>Max Points: {assignment.marks}</span>
                         </div>
                     </div>
                     {assignment.status === 'pending' && (

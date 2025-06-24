@@ -5,7 +5,6 @@ const studentSchema = new Schema(
         name: {type: String, required: true},
         email: {type: String, unique: true, required: true},
         courses: [{type: Schema.Types.ObjectId, ref:'Course'}],
-        assignments: [{type: Schema.Types.ObjectId, ref:'Assignment'}], 
         solutions: [{type: Schema.Types.ObjectId, ref:'Solution'}]
     }, 
     {
