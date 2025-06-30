@@ -41,8 +41,10 @@ export default function StudentCourse() {
               setTas(res.data.tas)
               setStudents(res.data.students)
 
-              const assignmentRes = await axios.get(`http://localhost:5000/student/getCourseAssignments/${courseId}`)
+              const assignmentRes = await axios.get(`http://localhost:5000/course/getAssignments/${courseId}`)
               setAssignments(assignmentRes.data.assignments)
+
+              console.log(assignmentRes.data.assignments)
 
           }
           catch(err) {
@@ -55,7 +57,6 @@ export default function StudentCourse() {
         if(user) fetchCourses()
 
     }, [loading, user, courseId])
-    // Mock data - replace with actual data from your backend
     
     // const assignments = [
     //     {
@@ -323,7 +324,7 @@ export default function StudentCourse() {
                             </span>
                             <span className="flex items-center gap-1">
                               <User className="h-4 w-4" />
-                              Uploaded by: Prof. {assignment.course.faculty.name}
+                              Uploaded by: Prof. {faculty ? faculty.name : 'N/A'}
                             </span>
                             <span>Max Points: {assignment.marks}</span>
                           </div>

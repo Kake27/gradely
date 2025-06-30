@@ -2,25 +2,29 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/ContextProvider";
 import { ArrowLeft, Users, BookOpen, ClipboardList, CheckCircle, Clock,AlertTriangle,Menu,X,Calendar,User,
-        GraduationCap,FileText,Star} from 'lucide-react';
+        GraduationCap,Eye,Star} from 'lucide-react';
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
 
 export default function TACourse() {
-    const {user, loading} = useContext(UserContext)
     const navigate = useNavigate()
-
+    const {user, loading} = useContext(UserContext)
     const { courseId } = useParams();
     const [activeTab, setActiveTab] = useState('assignments');
     const [showSidebar, setShowSidebar] = useState(false);
 
+    // Page Data
     const [courseData, setCourseData] = useState([])
     const [faculty, setFaculty] = useState(null)
     const [students, setStudents] = useState([])
     const [tas, setTas] = useState([])
+    const [assignments, setAssignments] = useState([])
 
-    // const [assignments, setAssignments] = useState([])
+
+    // PDF View State
+    const [showPdfViewer, setShowPdfViewer] = useState(false);
+    const [selectedPdfUrl, setSelectedPdfUrl] = useState('');
 
     useEffect(() => {
         if(loading) return;
@@ -40,6 +44,9 @@ export default function TACourse() {
               setTas(res.data.tas)
               setStudents(res.data.students)
 
+              const assignmentRes = await axios.get(`http://localhost:5000/course/getAssignments/${courseId}`)
+              setAssignments(assignmentRes.data.assignments)
+
           }
           catch(err) {
               console.log("Error fetching course: ", err);
@@ -54,35 +61,35 @@ export default function TACourse() {
 
   // Mock data - replace with actual data from your backend
   
-  const assignments = [
-    {
-      id: '1',
-      name: 'Binary Trees Implementation',
-      description: 'Implement binary search tree with insert, delete, and search operations',
-      dueDate: '2024-03-25',
-      maxPoints: 100,
-      uploadedDate: '2024-03-10',
-      uploadedBy: 'Prof. Smith'
-    },
-    {
-      id: '2',
-      name: 'Linked List Operations',
-      description: 'Create a doubly linked list with various operations',
-      dueDate: '2024-04-05',
-      maxPoints: 80,
-      uploadedDate: '2024-03-15',
-      uploadedBy: 'Prof. Smith'
-    },
-    {
-      id: '3',
-      name: 'Graph Algorithms',
-      description: 'Implement BFS and DFS traversal algorithms',
-      dueDate: '2024-04-15',
-      maxPoints: 120,
-      uploadedDate: '2024-03-20',
-      uploadedBy: 'Prof. Smith'
-    }
-  ];
+  // const assignments = [
+  //   {
+  //     id: '1',
+  //     name: 'Binary Trees Implementation',
+  //     description: 'Implement binary search tree with insert, delete, and search operations',
+  //     dueDate: '2024-03-25',
+  //     maxPoints: 100,
+  //     uploadedDate: '2024-03-10',
+  //     uploadedBy: 'Prof. Smith'
+  //   },
+  //   {
+  //     id: '2',
+  //     name: 'Linked List Operations',
+  //     description: 'Create a doubly linked list with various operations',
+  //     dueDate: '2024-04-05',
+  //     maxPoints: 80,
+  //     uploadedDate: '2024-03-15',
+  //     uploadedBy: 'Prof. Smith'
+  //   },
+  //   {
+  //     id: '3',
+  //     name: 'Graph Algorithms',
+  //     description: 'Implement BFS and DFS traversal algorithms',
+  //     dueDate: '2024-04-15',
+  //     maxPoints: 120,
+  //     uploadedDate: '2024-03-20',
+  //     uploadedBy: 'Prof. Smith'
+  //   }
+  // ];
 
   const assignmentsToGrade = [
     {
@@ -216,8 +223,31 @@ export default function TACourse() {
     }
   };
 
+      //PDF Viewing Functionality
+    const handleViewPdf = (pdfUrl) => {
+      setSelectedPdfUrl(pdfUrl);
+      setShowPdfViewer(true);
+    };
+
+    const handleClosePdfViewer = () => {
+      setShowPdfViewer(false);
+      setSelectedPdfUrl('');
+    };
+
+    function PdfViewer({ pdfUrl }) {
+      return (
+        <iframe
+          src={pdfUrl}
+          title="Assignment PDF"
+          width="100%"
+          height="600px"
+          style={{ border: "none", borderRadius: "8px" }}
+        ></iframe>
+      );
+    }
+
     return (
-            <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -309,10 +339,10 @@ export default function TACourse() {
                 <h2 className="text-2xl font-semibold text-gray-900 mb-6">Course Assignments</h2>
                 <div className="space-y-4">
                   {assignments.map((assignment) => (
-                    <div key={assignment.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-                      <div className="flex items-start justify-between mb-4">
+                    <div key={assignment._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                      <div className="flex items-start justify-between ">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{assignment.name}</h3>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{assignment.title}</h3>
                           <p className="text-gray-600 mb-3">{assignment.description}</p>
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <span className="flex items-center gap-1">
@@ -323,7 +353,18 @@ export default function TACourse() {
                               <User className="h-4 w-4" />
                               Uploaded by: {assignment.uploadedBy}
                             </span>
-                            <span>Max Points: {assignment.maxPoints}</span>
+                            <span>Max Points: {assignment.marks}</span>
+                          </div>
+                           <div className="flex items-center gap-4 mt-4">
+                            {assignment.url && (
+                              <button
+                                onClick={() => handleViewPdf(assignment.url)}
+                                className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors text-sm"
+                              >
+                                <Eye className="h-4 w-4" />
+                                View PDF
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -382,11 +423,6 @@ export default function TACourse() {
                                 {new Date(assignment.submittedDate).toLocaleDateString()}
                               </div>
                             </td>
-                            {/* <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(assignment.priority)}`}>
-                                {assignment.priority.charAt(0).toUpperCase() + assignment.priority.slice(1)}
-                              </span>
-                            </td> */}
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {assignment.maxPoints} pts
                             </td>
@@ -672,6 +708,27 @@ export default function TACourse() {
           )}
         </div>
       </div>
+       {showPdfViewer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Assignment PDF</h3>
+              <button
+                onClick={handleClosePdfViewer}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              <PdfViewer pdfUrl={selectedPdfUrl} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     )
 }
