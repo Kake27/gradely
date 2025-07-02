@@ -65,15 +65,51 @@ studentRouter.get("/getCourses/:studentId", async(req, res) => {
             path: 'courses', 
             populate: [{
                 path: 'faculty',
-                select: 'name email'},
-                {
-                    path: 'assignments',
-                }
-            ]
-        })
+                select: 'name email'
+            },
+            {
+                path: 'assignments',
+            }
+        ]
+        }).lean()
         if (!student) {
             return res.status(404).json({ error: "Student not found" });
         }
+
+        const allAssignments = [];
+        student.courses.forEach(course => {
+            course.assignments.forEach(assignment => {
+                allAssignments.push(assignment._id)
+            })
+        });
+
+
+        const submissions = await Solution.find({
+            student: req.params.studentId,
+            assignment: {$in: allAssignments}
+        })
+
+        const submissionMap = new Map();
+        submissions.forEach(sub => {
+            submissionMap.set(sub.assignment.toString(), sub.submittedDate);
+        });
+
+        const now = new Date()
+
+        student.courses.forEach(course => {
+        course.assignments = course.assignments.map(assignment => {
+            const idStr = assignment._id.toString();
+
+            if (submissionMap.has(idStr)) {
+                assignment.status = "submitted";
+            } else if (assignment.dueDate && new Date(assignment.dueDate) < now) {
+                assignment.status = "overdue";
+            }
+            else assignment.status = "pending";
+
+            return assignment
+        });
+        });
 
         res.status(200).json({ courses: student.courses });
     }
@@ -96,7 +132,9 @@ studentRouter.get("/:studentId/course/:courseId/submissions", async (req, res) =
             student: studentId
         }).populate('assignment', 'title marks')
 
-        res.status(200).json({submissions})
+        const submittedAssignments = submissions.map(sub => sub.assignment._id)
+
+        res.status(200).json({submissions, submittedAssignments})
     }
 
     catch(err) {
@@ -105,5 +143,24 @@ studentRouter.get("/:studentId/course/:courseId/submissions", async (req, res) =
     }
 })
 
+studentRouter.get("/submissions/:studentId", async (req, res) => {
+    try {
+        if(!req.params.studentId) return res.status(400).json({error: "Student ID required!"})
+
+        const submissions = await Solution.find({student: req.params.studentId}).populate({
+            path: 'assignment',
+            populate:{
+                path: 'course',
+                select: 'name'
+            }
+        })
+
+        res.status(200).json({submissions: submissions})
+    }
+    catch(err) {
+        console.error("Error getting submissions: ", err)
+        res.status(500).json({ error: "Internal server error" });
+    }
+})
 
 export default studentRouter;

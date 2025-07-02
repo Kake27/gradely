@@ -33,6 +33,7 @@ export default function StudentCourse() {
     const [students, setStudents] = useState([])
     const [assignments, setAssignments] = useState([])
     const [submissions, setSubmissions] = useState([])
+    const [submittedAssignments, setSubmittedAssignments] = useState([]);
 
     // PDF View State
     const [showPdfViewer, setShowPdfViewer] = useState(false);
@@ -57,11 +58,21 @@ export default function StudentCourse() {
               setStudents(res.data.students)
 
               const assignmentRes = await axios.get(`http://localhost:5000/course/getAssignments/${courseId}`)
-              setAssignments(assignmentRes.data.assignments)
+              const assignments = assignmentRes.data.assignments
 
               const submissionRes = await axios.get(`http://localhost:5000/student/${user.id}/course/${courseId}/submissions`)
               setSubmissions(submissionRes.data.submissions)
-              console.log(submissionRes.data.submissions)
+
+              const submittedAssignments = submissionRes.data.submittedAssignments;
+
+              const updatedAssignments = assignments.map(assignment =>({
+                ...assignment,
+                status: submittedAssignments.includes(assignment._id) ? 'submitted' : 'pending'
+              }))
+
+              setAssignments(updatedAssignments)
+
+
           }
           catch(err) {
               console.log("Error fetching course: ", err);
@@ -268,7 +279,7 @@ export default function StudentCourse() {
       const getSubmissionButtonText = (assignment) => {
         if (assignment.status === 'submitted') {
           return 'Resubmit';
-        } else if (assignment.status === 'overdue') {
+        } else if (assignment.status === 'pending' && isOverdue(assignment.dueDate)) {
           return 'Submit Late';
         } else {
           return 'Submit';
@@ -278,7 +289,7 @@ export default function StudentCourse() {
     const getSubmissionButtonColor = (assignment) => {
       if (assignment.status === 'submitted') {
         return 'bg-orange-600 hover:bg-orange-700';
-      } else if (assignment.status === 'overdue') {
+      } else if (assignment.status === 'pending' && isOverdue(assignment.dueDate)) {
         return 'bg-red-600 hover:bg-red-700';
       } else {
         return 'bg-blue-600 hover:bg-blue-700';
@@ -396,10 +407,10 @@ export default function StudentCourse() {
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="text-lg font-semibold text-gray-900">{assignment.title}</h3>
-                            {/* {getStatusIcon(assignment.status)}
+                            {getStatusIcon(assignment.status)}
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
                               {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
-                            </span> */}
+                            </span>
                           </div>
                           <p className="text-gray-600 mb-3">{assignment.description}</p>
                           <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -425,7 +436,7 @@ export default function StudentCourse() {
                             )}
                           </div>
 
-                           {assignment.submittedFile && (
+                           {/* {assignment.submittedFile && (
                             <div className="flex items-center gap-2 text-sm text-green-600 mb-2">
                               <FileText className="h-4 w-4" />
                               <span>Submitted: {assignment.submittedFile}</span>
@@ -433,9 +444,9 @@ export default function StudentCourse() {
                                 on {new Date(assignment.submittedDate).toLocaleDateString()}
                               </span>
                             </div>
-                          )}
+                          )} */}
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
+                        {/* <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
                           <button 
                             onClick={() => handleSubmitAssignment(assignment)}
                             className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors ${getSubmissionButtonColor(assignment)}`}
@@ -443,13 +454,39 @@ export default function StudentCourse() {
                             <Send className="h-4 w-4" />
                             {getSubmissionButtonText(assignment)}
                           </button>
+                        </div> */}
+                        <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
+                          {assignment.status === 'submitted' && (
+                            <button 
+                            onClick={() => handleSubmitAssignment(assignment)}
+                            className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg transition-colors ${getSubmissionButtonColor(assignment)}`}
+                          >
+                            <Send className="h-4 w-4" />
+                            {getSubmissionButtonText(assignment)}
+                          </button>
+                          )}
+                          
+                          { assignment.status === 'pending' && (
+                            isOverdue(assignment.dueDate) ? (
+                              <button 
+                                onClick={() => handleSubmitAssignment(assignment)}
+                                className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                Submit Late
+                              </button>
+                            ):
+                            (<button
+                              onClick={() => handleSubmitAssignment(assignment)}
+                              className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                Submit
+                            </button>)
+                          )}
                         </div>
                         {/* {assignment.status === 'pending' && (
                           <button className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                             Submit
                           </button>
                         )}
-                        {assignment.status === 'overdue' && (
+                        {isOverdue(assignment.dueDate) && assignment.status === 'pending' && (
                           <button className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                             Submit Late
                           </button>
@@ -763,7 +800,7 @@ export default function StudentCourse() {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">
-                {selectedAssignment.status === 'pending' ? 'Resubmit Assignment' : 'Submit Assignment'}
+                {selectedAssignment.status === 'pending' ? 'Submit Assignment' : 'Resubmit Assignment'}
               </h3>
               <button
                 onClick={handleCancelSubmission}
@@ -784,7 +821,7 @@ export default function StudentCourse() {
                     <Calendar className="h-4 w-4" />
                     Due: {new Date(selectedAssignment.dueDate).toLocaleDateString()}
                   </span>
-                  <span>Max Points: {selectedAssignment.maxPoints}</span>
+                  <span>Max Points: {selectedAssignment.marks}</span>
                 </div>
                 {selectedAssignment.submittedFile && (
                   <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -841,7 +878,7 @@ export default function StudentCourse() {
               </div>
 
               {/* Warning for late submission */}
-              {selectedAssignment.status === 'overdue' && (
+              {selectedAssignment.status === 'pending' && isOverdue(selectedAssignment.dueDate) && (
                 <div className="bg-red-50 p-3 rounded-lg border border-red-200">
                   <p className="text-sm text-red-700 font-medium">
                     ⚠️ This assignment is past due. Late submissions may be penalized.

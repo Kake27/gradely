@@ -15,6 +15,7 @@ export default function StudentDashboard() {
 
     const [courses, setCourses] = useState([])
     const [assignments, setAssignments] = useState([]);
+    const [submissions, setSubmissions] = useState([])
 
     const delay = (ms) => new Promise((resolve)=>setTimeout(resolve, ms));
     
@@ -31,6 +32,12 @@ export default function StudentDashboard() {
                         courseId: course._id
                     }))
                 ));
+
+                console.log(res.data.courses)
+
+                const submissionsRes = await axios.get(`http://localhost:5000/student/submissions/${user.id}`)
+                // console.log(submissionsRes.data.submissions)
+                setSubmissions(submissionsRes.data.submissions)
             }
             catch(err) {
                 console.log("Error loading courses: ", err);
@@ -78,48 +85,48 @@ export default function StudentDashboard() {
     //     },
     // ];
 
-    const submissions = [
-        { 
-        id: '1', 
-        assignmentName: 'Linked List Implementation', 
-        course: 'Data Structures', 
-        submittedDate: '2024-03-15', 
-        status: 'checked',
-        grade: 'A-',
-        maxPoints: 100,
-        feedback: 'Excellent implementation! Minor optimization suggestions in comments.',
-        fileName: 'linked_list.cpp'
-        },
-        { 
-        id: '2', 
-        assignmentName: 'Graph Traversal', 
-        course: 'Algorithms', 
-        submittedDate: '2024-03-18', 
-        status: 'checked',
-        grade: 'B+',
-        maxPoints: 85,
-        feedback: 'Good understanding of BFS and DFS. Edge case handling could be improved.',
-        fileName: 'graph_traversal.py'
-        },
-        { 
-        id: '3', 
-        assignmentName: 'Database Design', 
-        course: 'Database Systems', 
-        submittedDate: '2024-03-22', 
-        status: 'unchecked',
-        maxPoints: 75,
-        fileName: 'database_design.sql'
-        },
-        { 
-        id: '4', 
-        assignmentName: 'Project Proposal', 
-        course: 'Software Engineering', 
-        submittedDate: '2024-03-24', 
-        status: 'unchecked',
-        maxPoints: 50,
-        fileName: 'project_proposal.pdf'
-        },
-    ];
+    // const submissions = [
+    //     { 
+    //     id: '1', 
+    //     assignmentName: 'Linked List Implementation', 
+    //     course: 'Data Structures', 
+    //     submittedDate: '2024-03-15', 
+    //     status: 'checked',
+    //     grade: 'A-',
+    //     maxPoints: 100,
+    //     feedback: 'Excellent implementation! Minor optimization suggestions in comments.',
+    //     fileName: 'linked_list.cpp'
+    //     },
+    //     { 
+    //     id: '2', 
+    //     assignmentName: 'Graph Traversal', 
+    //     course: 'Algorithms', 
+    //     submittedDate: '2024-03-18', 
+    //     status: 'checked',
+    //     grade: 'B+',
+    //     maxPoints: 85,
+    //     feedback: 'Good understanding of BFS and DFS. Edge case handling could be improved.',
+    //     fileName: 'graph_traversal.py'
+    //     },
+    //     { 
+    //     id: '3', 
+    //     assignmentName: 'Database Design', 
+    //     course: 'Database Systems', 
+    //     submittedDate: '2024-03-22', 
+    //     status: 'unchecked',
+    //     maxPoints: 75,
+    //     fileName: 'database_design.sql'
+    //     },
+    //     { 
+    //     id: '4', 
+    //     assignmentName: 'Project Proposal', 
+    //     course: 'Software Engineering', 
+    //     submittedDate: '2024-03-24', 
+    //     status: 'unchecked',
+    //     maxPoints: 50,
+    //     fileName: 'project_proposal.pdf'
+    //     },
+    // ];
 
     const handleLogout = async () => {
         navigate("/login")
@@ -165,6 +172,30 @@ export default function StudentDashboard() {
         return new Date(dueDate) < new Date();
     };
 
+    const getStatus = (status) => {
+        if(status==="submitted") {
+            return (
+                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-green-600 bg-green-100">
+                    Submitted
+                </span>
+            )
+        }
+        else if(status==="overdue") {
+            return (
+                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-red-600 bg-red-100">
+                    Overdue
+                </span>
+            )
+        }
+        else {
+            return (
+                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-yellow-600 bg-yellow-100">
+                    Under Review
+                </span>
+            )
+        }
+    }
+
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -173,8 +204,8 @@ export default function StudentDashboard() {
             <header className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Welcome, Student</h1>
-                    <p className="text-gray-600">Computer Science Department</p>
+                    <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
+                    {/* <p className="text-gray-600">Computer Science Department</p> */}
                 </div>
                 <button
                     onClick={handleLogout}
@@ -210,7 +241,7 @@ export default function StudentDashboard() {
                 } flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                 >
                 <ClipboardList className="h-5 w-5" />
-                Pending Assignments
+                Your Assignments
                 </button>
                 <button
                 onClick={() => setActiveTab('submissions')}
@@ -245,10 +276,6 @@ export default function StudentDashboard() {
                         <BookOpen className="h-5 w-5" />
                         <span><b>{course.assignments.length}</b> Assignments</span>
                     </div>
-                    {/* <div className="flex items-center gap-2 text-gray-600">
-                        <Calendar className="h-5 w-5" />
-                        <span>{course.schedule}</span>
-                    </div> */}
                     </div>
                 </div>
                 ))}
@@ -295,6 +322,11 @@ export default function StudentDashboard() {
                             <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4" />
                                 {new Date(assignment.dueDate).toLocaleDateString()}
+                            </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex items-center gap-2">
+                                {getStatus(assignment.status)}
                             </div>
                             </td>
                             {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -348,16 +380,16 @@ export default function StudentDashboard() {
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {submissions.filter(s => s.status === 'checked').map((submission) => (
-                        <tr key={submission.id} className="hover:bg-gray-50">
+                        {submissions.filter(s => s.status === 'graded').map((submission) => (
+                        <tr key={submission._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                             <div>
-                                <div className="text-sm font-medium text-gray-900">{submission.assignmentName}</div>
-                                <div className="text-sm text-gray-500">{submission.fileName}</div>
+                                <div className="text-sm font-medium text-gray-900">{submission.assignment.title}</div>
+                                <div className="text-sm text-gray-500">{submission.filename}</div>
                             </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {submission.course}
+                            {submission.assignment.course.name}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <div className="flex items-center gap-2">
@@ -402,10 +434,10 @@ export default function StudentDashboard() {
                                 Course
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Submitted
+                                Submission Date
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Max Points
+                                Max Marks
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Status
@@ -413,16 +445,16 @@ export default function StudentDashboard() {
                             </tr>
                         </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {submissions.filter(s => s.status === 'unchecked').map((submission) => (
-                        <tr key={submission.id} className="hover:bg-gray-50">
+                        {submissions.filter(s => s.status === 'pending').map((submission) => (
+                        <tr key={submission._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                             <div>
-                                <div className="text-sm font-medium text-gray-900">{submission.assignmentName}</div>
-                                <div className="text-sm text-gray-500">{submission.fileName}</div>
+                                <div className="text-sm font-medium text-gray-900">{submission.assignment.title}</div>
+                                <div className="text-sm text-gray-500">{submission.filename}</div>
                             </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {submission.course}
+                            {submission.assignment.course.name}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             <div className="flex items-center gap-2">
@@ -431,12 +463,12 @@ export default function StudentDashboard() {
                             </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {submission.maxPoints} pts
+                            {submission.assignment.marks} marks
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-yellow-600 bg-yellow-100">
-                                Under Review
-                            </span>
+                                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full text-yellow-600 bg-yellow-100">
+                                    Under Review
+                                </span>
                             </td>
                         </tr>
                         ))}

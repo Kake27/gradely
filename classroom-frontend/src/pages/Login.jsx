@@ -27,6 +27,8 @@ export default function Login() {
                 navigate("/signup");
                 return;
             }
+
+            console.log("User found in Firestore:", userDoc.data());
             
             // Sign in with Firebase Auth
             await signInWithEmailAndPassword(auth, email.toLowerCase().trim(), password);
@@ -80,8 +82,8 @@ export default function Login() {
         catch(err) {
             if (err.code === "auth/invalid-credential") {
                 toast.error("You have entered either an invalid email or password. Please try again or sign up.");
-            } else{
-                alert("Something went wrong: " + err.message);
+            } else {
+                toast.error("Something went wrong: " + err.message);
             }
             return ;
         }
