@@ -1,7 +1,9 @@
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../context/ContextProvider";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Users, LogOut, Calendar, ClipboardList, Upload, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { BookOpen, Users, LogOut, Calendar, ClipboardList, Upload, CheckCircle, Clock, AlertCircle,
+         User
+ } from "lucide-react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -25,7 +27,8 @@ export default function StudentDashboard() {
                 setAssignments(res.data.courses.flatMap(course => 
                     (course.assignments || []).map(assignment => ({
                         ...assignment,
-                        courseName: course.name
+                        courseName: course.name,
+                        courseId: course._id
                     }))
                 ));
             }
@@ -251,48 +254,69 @@ export default function StudentDashboard() {
                 ))}
             </div>
             )}
-
+            
+            {/* {getStatusIcon(assignment.status)}
+            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
+                {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
+            </span> */}
             {activeTab === 'assignments' && (
-            <div className="space-y-4">
-                {assignments.map((assignment) => (
-                <div key={assignment._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
-                    <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">{assignment.title}</h3>
-                        {/* {getStatusIcon(assignment.status)}
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
-                            {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
-                        </span> */}
-                        </div>
-                        <p className="text-gray-600 mb-3">{assignment.description}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                            <BookOpen className="h-4 w-4" />
+               <div className="bg-white shadow rounded-lg overflow-hidden">
+                    <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Assignment
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Course
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Due Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Progress
+                        </th> */}
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {assignments.map((assignment) => (
+                        <tr key={assignment._id} className="hover:bg-gray-50 cursor-pointer" 
+                            onClick={()=>navigate(`/student/courses/${assignment.courseId}`)}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {assignment.title}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {assignment.courseName}
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <Calendar className="h-4 w-4" />
-                            Due: {new Date(assignment.dueDate).toLocaleDateString()}
-                        </span>
-                        <span>Max Points: {assignment.marks}</span>
-                        </div>
-                    </div>
-                    {assignment.status === 'pending' && (
-                        <button className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        Submit
-                        </button>
-                    )}
-                    </div>
-                    {isOverdue(assignment.dueDate) && assignment.status === 'pending' && (
-                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-700 text-sm font-medium">This assignment is overdue!</p>
-                    </div>
-                    )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4" />
+                                {new Date(assignment.dueDate).toLocaleDateString()}
+                            </div>
+                            </td>
+                            {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {assignment.submissions.length} / {assignment.course.students.length}
+                            </td> */}
+                            {/* <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                className="bg-blue-600 h-2 rounded-full" 
+                                style={{ width: `${(assignment.submissions.length / assignment.course.students.length) * 100}%` }}
+                                ></div>
+                            </div>
+                            <span className="text-xs text-gray-500 mt-1">
+                                {Math.round((assignment.submissions.length / assignment.course.students.length) * 100)}%
+                            </span>
+                            </td> */}
+                        </tr>
+                        ))}
+                    </tbody>
+                    </table>
                 </div>
-                ))}
-            </div>
-            )}
+                )}
 
             {activeTab === 'submissions' && (
             <div className="space-y-6">

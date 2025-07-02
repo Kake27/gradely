@@ -8,6 +8,7 @@ import studenRouter from './routes/studentRoute.js'
 import taRouter from './routes/taRoute.js'
 import courseRouter from './routes/courseRoute.js'
 import assignmentRouter from './routes/assignment.js'
+import submissionRouter from './routes/submissionRoute.js'
 
 
 const app = express()
@@ -24,6 +25,7 @@ app.use("/student", studenRouter)
 app.use("/ta", taRouter)
 app.use("/course", courseRouter)
 app.use("/assignment", assignmentRouter)
+app.use("/submission", submissionRouter)
 
 
 app.listen(5000, ()=> {

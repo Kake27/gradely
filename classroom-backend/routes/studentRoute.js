@@ -2,6 +2,7 @@ import { Router } from "express";
 import Student from "../models/student.js";
 import Course from "../models/courses.js";
 import Assignment from "../models/assignment.js";
+import Solution from "../models/solutions.js";
 
 const studentRouter = Router();
 
@@ -66,9 +67,8 @@ studentRouter.get("/getCourses/:studentId", async(req, res) => {
                 path: 'faculty',
                 select: 'name email'},
                 {
-                    path: 'assignments'
+                    path: 'assignments',
                 }
-
             ]
         })
         if (!student) {
@@ -83,26 +83,24 @@ studentRouter.get("/getCourses/:studentId", async(req, res) => {
     }
 })
 
-studentRouter.get("/getCourseAssignments/:courseId", async (req, res) => {
+studentRouter.get("/:studentId/course/:courseId/submissions", async (req, res) => {
     try {
-        if(!req.params.courseId) return res.status(400).json({error: "Course ID required!"});
+        const { studentId, courseId } = req.params;
+        if (!studentId || !courseId) return res.status(400).json({ error: "Student ID and Course ID are required!" });
+        
+        const assignments = await Assignment.find({course: courseId}).select('_id')
+        const assignmentIds = assignments.map(assignment => assignment._id);
 
-        const assignments = await Assignment.find({course: req.params.courseId}).populate({
-            path: 'course',
-            populate: {
-                path: 'faculty',
-                select: 'name'
-            }
-        })
+        const submissions = await Solution.find({
+            assignment: { $in: assignmentIds },
+            student: studentId
+        }).populate('assignment', 'title marks')
 
-        if (!assignments) {
-            return res.status(404).json({ error: "Student not found" });
-        }
-
-        res.status(200).json({ assignments: assignments });
+        res.status(200).json({submissions})
     }
+
     catch(err) {
-        console.error("Error getting assignments: ", err)
+        console.error("Error getting courses: ", err)
         res.status(500).json({ error: "Internal server error" });
     }
 })

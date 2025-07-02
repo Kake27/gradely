@@ -7,7 +7,7 @@ const assignmentSchema = new Schema(
         url: {type: String, required: true},
         marks: {type: Number, default: 100},
         course: {type: Schema.Types.ObjectId, ref:'Course', required: true},
-        submissions: [{type:Schema.Types.ObjectId, ref:'Submission'}],
+        submissions: [{type:Schema.Types.ObjectId, ref:'Solution'}],
         rubrics : {type: Schema.Types.ObjectId, ref:'Rubrics'},
         dueDate: {type: Date, default: null},
         
