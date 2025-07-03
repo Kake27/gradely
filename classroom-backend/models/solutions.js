@@ -16,6 +16,7 @@ const solutionSchema = new Schema(
         marks: {type: Number, default: 0},
         feedback: {type: String, default: ''},
         gradedBy: {type: Schema.Types.ObjectId, ref: 'TA', default: null},
+        checkedDate: {type: Date, default: null},
         reevalRequested: {type: Boolean, default: false},
     },
     {

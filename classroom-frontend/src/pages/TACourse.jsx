@@ -21,6 +21,9 @@ export default function TACourse() {
     const [tas, setTas] = useState([])
     const [assignments, setAssignments] = useState([])
 
+    const [toGradeSolutions, setToGradeSolutions] = useState([])
+    const [gradedSolutions, setGradedSolutions] = useState([])
+
 
     // PDF View State
     const [showPdfViewer, setShowPdfViewer] = useState(false);
@@ -37,7 +40,6 @@ export default function TACourse() {
                   navigate('/unauthorized')
                   return
               }
-              console.log("Course data fetched successfully: ", res.data);
               setCourseData(res.data)
 
               setFaculty(res.data.faculty)
@@ -46,6 +48,32 @@ export default function TACourse() {
 
               const assignmentRes = await axios.get(`http://localhost:5000/course/getAssignments/${courseId}`)
               setAssignments(assignmentRes.data.assignments)
+
+              // console.log(assignmentRes.data.assignments)
+
+              const gradedSubmissions = assignmentRes.data.assignments.flatMap(assignment =>
+                assignment.gradedSubmissions.map(sub => ({
+                  ...sub,
+                  assignmentName: assignment.title,
+                  assignmentDueDate: assignment.dueDate,
+                  maxMarks: assignment.marks
+                }))
+              );
+
+              const ungradedSubmissions = assignmentRes.data.assignments.flatMap(assignment =>
+                assignment.ungradedSubmissions.map(sub => ({
+                  ...sub,
+                  assignmentName: assignment.title,
+                  assignmentDueDate: assignment.dueDate,
+                  maxMarks: assignment.marks
+                }))
+              );
+
+              setToGradeSolutions(ungradedSubmissions)
+              setGradedSolutions(gradedSubmissions)
+
+              // console.log(gradedSubmissions)
+              // console.log(ungradedSubmissions)
 
           }
           catch(err) {
@@ -59,37 +87,6 @@ export default function TACourse() {
 
     }, [loading, user, courseId])
 
-  // Mock data - replace with actual data from your backend
-  
-  // const assignments = [
-  //   {
-  //     id: '1',
-  //     name: 'Binary Trees Implementation',
-  //     description: 'Implement binary search tree with insert, delete, and search operations',
-  //     dueDate: '2024-03-25',
-  //     maxPoints: 100,
-  //     uploadedDate: '2024-03-10',
-  //     uploadedBy: 'Prof. Smith'
-  //   },
-  //   {
-  //     id: '2',
-  //     name: 'Linked List Operations',
-  //     description: 'Create a doubly linked list with various operations',
-  //     dueDate: '2024-04-05',
-  //     maxPoints: 80,
-  //     uploadedDate: '2024-03-15',
-  //     uploadedBy: 'Prof. Smith'
-  //   },
-  //   {
-  //     id: '3',
-  //     name: 'Graph Algorithms',
-  //     description: 'Implement BFS and DFS traversal algorithms',
-  //     dueDate: '2024-04-15',
-  //     maxPoints: 120,
-  //     uploadedDate: '2024-03-20',
-  //     uploadedBy: 'Prof. Smith'
-  //   }
-  // ];
 
   const assignmentsToGrade = [
     {
@@ -223,6 +220,15 @@ export default function TACourse() {
     }
   };
 
+  const handleGradeSubmission = (submissionId, assignmentId) => {
+    navigate(`/ta/checkSubmission/${assignmentId}/${submissionId}` , {
+      state: {
+        returnPath: window.location.pathname,
+        role: 'ta'
+      }
+    })
+  }
+
       //PDF Viewing Functionality
     const handleViewPdf = (pdfUrl) => {
       setSelectedPdfUrl(pdfUrl);
@@ -306,7 +312,7 @@ export default function TACourse() {
                   } flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                 >
                   <Clock className="h-5 w-5" />
-                  To Grade ({assignmentsToGrade.length})
+                  To Grade ({toGradeSolutions.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('graded')}
@@ -317,7 +323,7 @@ export default function TACourse() {
                   } flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                 >
                   <CheckCircle className="h-5 w-5" />
-                  Graded ({gradedAssignments.length})
+                  Graded ({gradedSolutions.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('reEvaluation')}
@@ -351,7 +357,7 @@ export default function TACourse() {
                             </span>
                             <span className="flex items-center gap-1">
                               <User className="h-4 w-4" />
-                              Uploaded by: {assignment.uploadedBy}
+                              Uploaded by: {faculty.name}
                             </span>
                             <span>Max Points: {assignment.marks}</span>
                           </div>
@@ -403,31 +409,32 @@ export default function TACourse() {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {assignmentsToGrade.map((assignment) => (
-                          <tr key={assignment.id} className="hover:bg-gray-50">
+                        {toGradeSolutions.map((solution) => (
+                          <tr key={solution._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
-                                <div className="text-sm font-medium text-gray-900">{assignment.studentName}</div>
-                                <div className="text-sm text-gray-500">{assignment.studentId}</div>
+                                <div className="text-sm font-medium text-gray-900">{solution.student.name}</div>
+                                {/* <div className="text-sm text-gray-500">{assignment.studentId}</div> */}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
-                                <div className="text-sm font-medium text-gray-900">{assignment.assignmentName}</div>
-                                <div className="text-sm text-gray-500">{assignment.fileName}</div>
+                                <div className="text-sm font-medium text-gray-900">{solution.assignmentName}</div>
+                                <div className="text-sm text-gray-500">{solution.filename}</div>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4" />
-                                {new Date(assignment.submittedDate).toLocaleDateString()}
+                                {new Date(solution.submittedDate).toLocaleDateString()}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {assignment.maxPoints} pts
+                              {solution.maxMarks} pts
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <button className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors">
+                              <button className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                                      onClick={() => handleGradeSubmission(solution._id, solution.assignment)}>
                                 Grade
                               </button>
                             </td>
@@ -461,42 +468,48 @@ export default function TACourse() {
                             Graded Date
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Graded By
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Feedback
                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {gradedAssignments.map((assignment) => (
-                          <tr key={assignment.id} className="hover:bg-gray-50">
+                        {gradedSolutions.map((solution) => (
+                          <tr key={solution._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
-                                <div className="text-sm font-medium text-gray-900">{assignment.studentName}</div>
-                                <div className="text-sm text-gray-500">{assignment.studentId}</div>
+                                <div className="text-sm font-medium text-gray-900">{solution.student.name}</div>
+                                {/* <div className="text-sm text-gray-500">{solution.studentId}</div> */}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
-                                <div className="text-sm font-medium text-gray-900">{assignment.assignmentName}</div>
-                                <div className="text-sm text-gray-500">{assignment.fileName}</div>
+                                <div className="text-sm font-medium text-gray-900">{solution.assignmentName}</div>
+                                <div className="text-sm text-gray-500">{solution.filename}</div>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getGradeColor(assignment.grade)}`}>
-                                {assignment.grade}
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getGradeColor(solution.grade)}`}>
+                                {solution.grade}
                               </span>
                               <div className="text-xs text-gray-500 mt-1">
-                                / {assignment.maxPoints} pts
+                                {solution.marks} / {solution.maxMarks} pts
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4" />
-                                {new Date(assignment.gradedDate).toLocaleDateString()}
+                                {new Date(solution.checkedDate).toLocaleDateString()}
                               </div>
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
-                              <div className="truncate" title={assignment.feedback}>
-                                {assignment.feedback}
+                              TA Name Here
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
+                              <div className="truncate" title={solution.feedback}>
+                                {solution.feedback}
                               </div>
                             </td>
                           </tr>

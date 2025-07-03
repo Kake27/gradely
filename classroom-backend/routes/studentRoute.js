@@ -1,6 +1,5 @@
 import { Router } from "express";
 import Student from "../models/student.js";
-import Course from "../models/courses.js";
 import Assignment from "../models/assignment.js";
 import Solution from "../models/solutions.js";
 

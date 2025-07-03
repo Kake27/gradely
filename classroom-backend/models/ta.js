@@ -5,7 +5,8 @@ const taSchema = new Schema(
         name: {type: String, required: true},
         email: { type: String, unique: true, required: true },
         courses: [{type: Schema.Types.ObjectId, ref: 'Course'}],
-        faculty: [{type: Schema.Types.ObjectId, ref: 'Faculty'}]
+        faculty: [{type: Schema.Types.ObjectId, ref: 'Faculty'}],
+        checked: [{type: Schema.Types.ObjectId, ref: 'Solution'}]
     }, 
     {
         collection: 'ta'

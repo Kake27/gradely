@@ -122,15 +122,50 @@ courseRouter.get("/getAssignments/:courseId", async(req, res) => {
     try {
         if(!req.params.courseId) return res.status(400).json({error: "Course ID is required"})
         
-        const course = await Course.findById(req.params.courseId).populate('assignments')
+        const course = await Course.findById(req.params.courseId).populate({
+            path: 'assignments',
+            populate: [{
+                path: 'submissions',
+                populate: [{
+                    path: 'student',
+                    field: 'name'
+                }]
+            }]
+        })
+
         if(!course) return res.status(404).json({error: "Course not found"})
 
-        res.status(200).json({assignments: course.assignments})
+        const processedAssignments = course.assignments.map(assignment => {
+            const gradedSubmissions = [];
+            const ungradedSubmissions = [];
+
+            assignment.submissions.forEach(sub => {
+                if (sub.status === "graded") {
+                    gradedSubmissions.push(sub);
+                } else {
+                    ungradedSubmissions.push(sub);
+                }
+            });
+
+            return {
+                _id: assignment._id,
+                title: assignment.title,
+                description: assignment.description,
+                dueDate: assignment.dueDate,
+                url: assignment.url,
+                marks: assignment.marks,
+                gradedSubmissions,
+                ungradedSubmissions
+            };
+        });
+
+        return res.status(200).json({assignments: processedAssignments})
     }
     catch(err) {
         console.error("Error fetching assignments: ", err)
         res.status(500).json({error: "Internal Server Error"})
     }
 })
+
 
 export default courseRouter
