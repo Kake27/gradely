@@ -1,4 +1,4 @@
-# Gradely – Role-Based Grading Platform
+# Gradely – A Role-Based Grading Platform
 
 Gradely is a full-stack web application designed to simplify course management, assignment distribution, and grading workflows for **faculty, TAs, and students**. It supports role-based access control, solution submissions, grading, and feedback — all in one place.
 
