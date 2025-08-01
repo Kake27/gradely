@@ -3,25 +3,27 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { UserContext } from "../context/ContextProvider";
 import { ArrowLeft, Users, BookOpen, ClipboardList, Upload, Plus, X, Calendar, CheckCircle,Clock, Menu, 
-  UserPlus, Paperclip, FileText, Eye} from 'lucide-react';
+  UserPlus, Paperclip, FileText, Eye, Edit} from 'lucide-react';
 
 import toast, {Toaster} from "react-hot-toast";
 
 export default function FacultyCourse() {
     const navigate = useNavigate()
-    const {user, logout, loading} = useContext(UserContext);
-    
+    const {user, loading} = useContext(UserContext);
+
+    // Page Data
     const {courseId} = useParams()
     const [courseData, setCourseData] = useState([])
     const [students, setStudents] = useState([])
     const [tas, setTas] = useState([])
 
+    // Page State
     const [activeTab, setActiveTab] = useState('assignments');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
     const [participantType, setParticipantType] = useState('student');
     const [showSidebar, setShowSidebar] = useState(false);
-
+    const [showPdfViewer, setShowPdfViewer] = useState(false);
 
 
     const [uploading, setUploading] = useState(false)
@@ -33,63 +35,12 @@ export default function FacultyCourse() {
         maxPoints: '',
         pdfFile: File
     });
-
-
     const [participantForm, setParticipantForm] = useState({email: ''});
-
-    const [showPdfViewer, setShowPdfViewer] = useState(false);
     const [selectedPdfUrl, setSelectedPdfUrl] = useState('');
 
-  const submissions = [
-    {
-      id: '1',
-      studentName: 'Alice Johnson',
-      studentId: 'CS001',
-      assignmentName: 'Binary Trees Implementation',
-      submittedDate: '2024-03-20',
-      fileName: 'binary_tree.cpp',
-      status: 'graded',
-      grade: 'A-',
-      gradedBy: 'TA Sarah Wilson',
-      gradedDate: '2024-03-22',
-      feedback: 'Excellent implementation with good optimization'
-    },
-    {
-      id: '2',
-      studentName: 'Bob Smith',
-      studentId: 'CS002',
-      assignmentName: 'Binary Trees Implementation',
-      submittedDate: '2024-03-21',
-      fileName: 'btree_solution.py',
-      status: 'graded',
-      grade: 'B+',
-      gradedBy: 'TA Mike Chen',
-      gradedDate: '2024-03-23',
-      feedback: 'Good logic, minor improvements needed'
-    },
-    {
-      id: '3',
-      studentName: 'Carol Davis',
-      studentId: 'CS003',
-      assignmentName: 'Linked List Operations',
-      submittedDate: '2024-03-24',
-      fileName: 'linked_list.java',
-      status: 'pending'
-    },
-    {
-      id: '4',
-      studentName: 'David Wilson',
-      studentId: 'CS004',
-      assignmentName: 'Binary Trees Implementation',
-      submittedDate: '2024-03-19',
-      fileName: 'tree_impl.cpp',
-      status: 'graded',
-      grade: 'A',
-      gradedBy: 'TA Sarah Wilson',
-      gradedDate: '2024-03-21',
-      feedback: 'Perfect implementation with excellent documentation'
-    }
-  ];
+    // Submission data states
+    const [gradedSubmissions, setGradedSubmissions] = useState([]);
+    const [ungradedSubmissions, setUngradedSubmissions] = useState([]);
 
   function PdfViewer({ pdfUrl }) {
     return (
@@ -111,7 +62,7 @@ export default function FacultyCourse() {
     const handleCreateAssignment = async() => {
         if (assignmentForm.name.trim() && assignmentForm.dueDate && assignmentForm.maxPoints) {
             setUploading(true);
-            let pdfUrl = '';
+            let pdfUrl = '', publicId = '';
 
             if(assignmentForm.pdfFile) {
               const formData = new FormData();
@@ -124,7 +75,8 @@ export default function FacultyCourse() {
                       formData
                     );
                     pdfUrl = cloudinaryRes.data.secure_url;
-                    console.log("Pdf uploaded successfully: ", pdfUrl)
+                    publicId = cloudinaryRes.data.public_id;
+                    console.log("Pdf uploaded successfully")
 
                 } catch (err) {
                     toast.error('Failed to upload PDF to Cloudinary');
@@ -137,40 +89,26 @@ export default function FacultyCourse() {
               title: assignmentForm.name.trim(),
               description: assignmentForm.description.trim(),
               url: pdfUrl,
-              courseId: courseId, 
+              publicId: publicId,
+              course: courseId, 
               marks: assignmentForm.maxPoints ? parseInt(assignmentForm.maxPoints) : 100,
               dueDate: assignmentForm.dueDate,
-              maxPoints: parseInt(assignmentForm.maxPoints),
-             
             };
 
 
             try {
-                const assignmentRes = await axios.post('http://localhost:5000/assignment/createAssignment', newAssignment);
-                const assignmentId = assignmentRes.data._id;
-
-                const courseRes = await axios.post(`http://localhost:5000/course/addAssignment`, {
+                const assignmentRes = await axios.post('http://localhost:5000/assignment/createAssignment', {
+                  assignmentData: newAssignment,
                   courseId: courseId,
-                  assignmentId: assignmentId
-                })
+                  facultyId: user.id
+                });
 
-                if(courseRes.data.error) {
-                    toast.error("Error occured while adding assignment to course!");
-                    return;
-                }
-
-                const facultyRes = await axios.post(`http://localhost:5000/faculty/addAssignment`, {
-                  facultyId: user.id,
-                  assignmentId: assignmentId
-                })
-
-                if(facultyRes.data.error) {
-                    toast.error("Error occured while adding assignment to faculty!");
-                    return;
+                if (assignmentRes.data.error) {
+                  toast.error("Error occurred while creating the assignment!");
+                  return;
                 }
 
                 toast.success('Assignment created successfully!');
-    
                 setAssignmentForm({ name: '', description: '', dueDate: '', maxPoints: '', pdfFile: null });
                 setShowCreateModal(false);
             } catch (err) {
@@ -283,6 +221,15 @@ export default function FacultyCourse() {
         setShowAddParticipantModal(true);
     };
 
+    const handleGradeSubmission = (submissionId, assignmentId) => {
+      navigate(`/checkSubmission/${assignmentId}/${submissionId}` , {
+        state: {
+          returnPath: window.location.pathname,
+          role: 'faculty'
+        }
+      })
+    }
+
     //PDF Viewing Functionality
     const handleViewPdf = (pdfUrl) => {
       setSelectedPdfUrl(pdfUrl);
@@ -314,12 +261,34 @@ export default function FacultyCourse() {
                   return
               }
               setCourseData(res.data)
-              
               setTas(res.data.tas)
               setStudents(res.data.students)
 
               const assignmentRes = await axios.get(`http://localhost:5000/course/getAssignments/${courseId}`);
               setAssignments(assignmentRes.data.assignments)
+
+              // console.log(assignmentRes.data.assignments)
+
+              const gradedSubmissions = assignmentRes.data.assignments.flatMap(assignment =>
+                assignment.gradedSubmissions.map(sub => ({
+                  ...sub,
+                  assignmentName: assignment.title,
+                  assignmentDueDate: assignment.dueDate,
+                  maxMarks: assignment.marks
+                }))
+              );
+
+              const ungradedSubmissions = assignmentRes.data.assignments.flatMap(assignment =>
+                assignment.ungradedSubmissions.map(sub => ({
+                  ...sub,
+                  assignmentName: assignment.title,
+                  assignmentDueDate: assignment.dueDate,
+                  maxMarks: assignment.marks
+                }))
+              );
+
+              setGradedSubmissions(gradedSubmissions)
+              setUngradedSubmissions(ungradedSubmissions)
 
           }
           catch(err) {
@@ -394,7 +363,7 @@ export default function FacultyCourse() {
                   } flex items-center gap-2 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                 >
                   <Upload className="h-5 w-5" />
-                  Submissions ({submissions.length})
+                  Submissions ({gradedSubmissions.length + ungradedSubmissions.length})
                 </button>
               </nav>
             </div>
@@ -428,7 +397,7 @@ export default function FacultyCourse() {
                               Due: {new Date(assignment.dueDate).toLocaleDateString()}
                             </span>
                             <span>Max Points: {assignment.marks}</span>
-                            <span>Submissions: {assignment.submissions.length}/{students.length}</span>
+                            <span>Submissions: {assignment.gradedSubmissions?.length + assignment.ungradedSubmissions?.length}/{students.length}</span>
                           </div>
                           <div className="flex items-center gap-4">
                             {assignment.url && (
@@ -452,11 +421,11 @@ export default function FacultyCourse() {
                           <div className="w-24 bg-gray-200 rounded-full h-2 mb-1">
                             <div 
                               className="bg-blue-600 h-2 rounded-full" 
-                              style={{ width: `${(assignment.submissions.length / students.length) * 100}%` }}
+                              style={{ width: `${(assignment.gradedSubmissions?.length+assignment.ungradedSubmissions?.length / students.length) * 100}%` }}
                             ></div>
                           </div>
                           <span className="text-xs text-gray-500">
-                            {Math.round((assignment.submissions.length / students.length) * 100)}% submitted
+                            {Math.round((assignment.gradedSubmissions?.length+assignment.ungradedSubmissions?.length / students.length) * 100)}% submitted
                           </span>
                         </div>
                       </div>
@@ -466,84 +435,207 @@ export default function FacultyCourse() {
               </div>
             ) : (
               <div>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6">Student Submissions</h2>
+                <div className="space-y-8">
+                  {/* Graded Submissions */}
+                  <div>
+                    <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                      Graded Submissions ({gradedSubmissions.length})
+                    </h2>
+                    
+                    {gradedSubmissions.length > 0 ? (
+                      <div className="bg-white shadow rounded-lg overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-green-50">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Student
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Assignment
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Submitted
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Grade
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Graded By
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Graded Date
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Action
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {gradedSubmissions.map((submission) => (
+                                <tr key={submission._id} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-900">
+                                        {submission.student?.name}
+                                      </div>
+                                      <div className="text-sm text-gray-500">
+                                        {submission.student?.email}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-900">
+                                        {submission.assignmentName}
+                                      </div>
+                                      <div className="text-sm text-gray-500">
+                                        {submission.filename || 'submission.pdf'}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <div className="flex items-center gap-2">
+                                      <Calendar className="h-4 w-4" />
+                                      {new Date(submission.submittedDate).toLocaleDateString()}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="flex flex-col">
+                                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full w-fit ${getGradeColor(submission.grade)}`}>
+                                        {submission.grade}
+                                      </span>
+                                      <span className="text-xs text-gray-500 mt-1">
+                                        {submission.marks} / {submission.maxMarks} pts
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {submission.gradedBy?.name || '-'}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <div className="flex items-center gap-2">
+                                      <Calendar className="h-4 w-4" />
+                                      {submission.checkedDate ? new Date(submission.checkedDate).toLocaleDateString() : '-'}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <button 
+                                      onClick={() => handleGradeSubmission(submission._id, submission.assignment)}
+                                      className="flex items-center gap-2 px-3 py-1 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 transition-colors"
+                                    >
+                                      <Edit className="h-3 w-3" />
+                                      Change Grade
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-lg shadow p-8 text-center">
+                        <CheckCircle className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Graded Submissions</h3>
+                        <p className="text-gray-500">No submissions have been graded yet.</p>
+                      </div>
+                    )}
+                  </div>
                 
-                {/* Submissions Table */}
-                <div className="bg-white shadow rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Student
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Assignment
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Submitted
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Grade
-                          </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Graded By
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {submissions.map((submission) => (
-                          <tr key={submission.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{submission.studentName}</div>
-                                <div className="text-sm text-gray-500">{submission.studentId}</div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{submission.assignmentName}</div>
-                                <div className="text-sm text-gray-500">{submission.fileName}</div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4" />
-                                {new Date(submission.submittedDate).toLocaleDateString()}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {submission.status === 'graded' ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full text-green-600 bg-green-100">
-                                  <CheckCircle className="h-3 w-3" />
-                                  Graded
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full text-yellow-600 bg-yellow-100">
-                                  <Clock className="h-3 w-3" />
-                                  Pending
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {submission.grade ? (
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getGradeColor(submission.grade)}`}>
-                                  {submission.grade}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400">-</span>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              {submission.gradedBy || '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  {/* Ungraded Submissions */}
+                  <div>
+                    <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <Clock className="h-6 w-6 text-yellow-500" />
+                      Pending Review ({ungradedSubmissions.length})
+                    </h2>
+                    
+                    {ungradedSubmissions.length > 0 ? (
+                      <div className="bg-white shadow rounded-lg overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-yellow-50">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Student
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Assignment
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Submitted
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Max Points
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Status
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Action
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {ungradedSubmissions.map((submission) => (
+                                <tr key={submission._id || submission.id} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-900">
+                                        {submission.student?.name}
+                                      </div>
+                                      <div className="text-sm text-gray-500">
+                                        {submission.student?.email || submission.studentEmail}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-900">
+                                        {submission.assignmentName}
+                                      </div>
+                                      <div className="text-sm text-gray-500">
+                                        {submission.filename || 'submission.pdf'}
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <div className="flex items-center gap-2">
+                                      <Calendar className="h-4 w-4" />
+                                      {new Date(submission.submittedDate || submission.createdAt).toLocaleDateString()}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {submission.maxMarks} pts
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full text-yellow-600 bg-yellow-100">
+                                      <Clock className="h-3 w-3" />
+                                      Awaiting Review
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <button 
+                                      onClick={() => handleGradeSubmission(submission._id, submission.assignment)}
+                                      className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors"
+                                    >
+                                      Grade
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-lg shadow p-8 text-center">
+                        <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Submissions</h3>
+                        <p className="text-gray-500">All submissions have been reviewed and graded.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -790,7 +882,7 @@ export default function FacultyCourse() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 />
               </div>
-                            <div>
+              <div>
                 <label htmlFor="pdfFile" className="block text-sm font-medium text-gray-700 mb-2">
                   Assignment PDF
                 </label>

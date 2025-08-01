@@ -7,7 +7,7 @@ import facultyRouter from './routes/facultyRoute.js'
 import studenRouter from './routes/studentRoute.js'
 import taRouter from './routes/taRoute.js'
 import courseRouter from './routes/courseRoute.js'
-import assignmentRouter from './routes/assignment.js'
+import assignmentRouter from './routes/assignmentRoute.js'
 import submissionRouter from './routes/submissionRoute.js'
 
 
@@ -28,6 +28,6 @@ app.use("/assignment", assignmentRouter)
 app.use("/submission", submissionRouter)
 
 
-app.listen(5000, ()=> {
+app.listen(process.env.PORT, ()=> {
     console.log("Server is running")
 })

@@ -4,7 +4,8 @@ const assignmentSchema = new Schema(
     {
         title: {type: String, required: true},
         description: {type: String},
-        url: {type: String, required: true},
+        url: {type: String},
+        publicId: {type: String},
         marks: {type: Number, default: 100},
         course: {type: Schema.Types.ObjectId, ref:'Course', required: true},
         submissions: [{type:Schema.Types.ObjectId, ref:'Solution'}],

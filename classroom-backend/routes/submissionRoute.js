@@ -79,8 +79,7 @@ submissionRouter.put("/gradeSolution/:solutionId", async (req, res) => {
                 checkedDate: new Date(),
                 status: "graded"
             },
-                {new: true},
-                {session}
+                {new: true, session}
             )
 
         if (!updatedSolution) {
@@ -96,6 +95,7 @@ submissionRouter.put("/gradeSolution/:solutionId", async (req, res) => {
         return res.status(200).json({message: "Solution graded successfully"})
     }
     catch(err) {
+        await session.abortTransaction()
         console.error(err);
         res.status(500).json({ error: "Failed to grade submission" });
     }

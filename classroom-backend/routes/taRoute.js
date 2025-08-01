@@ -1,5 +1,6 @@
 import { Router } from "express";
 import TA from "../models/ta.js";
+import Solution from "../models/solutions.js";
 
 const taRouter = Router();
 
@@ -96,6 +97,32 @@ taRouter.get("/getCourses/:taId", async(req, res) => {
     }
     catch(err) {
         console.error("Error getting courses: ", err)
+        res.status(500).json({ error: "Internal server error" });
+    }
+})
+
+taRouter.get("/getCheckedSolutions/:taId", async (req, res) => {
+    try {
+        if(!req.params.taId) return res.status(400).json({error: "TA ID required!"});
+        const checkedSolutions = await Solution.find({gradedBy: req.params.taId})
+            .populate({
+                    path: 'assignment',
+                    select: 'title course',
+                    populate: {
+                        path: 'course',
+                        select: 'name'
+                    }
+            })
+            .populate({
+                path: 'student',
+                select: 'name'
+            })
+
+        res.status(200).json({ checkedSolutions });
+
+    }
+    catch (err) {
+        console.error("Error getting checked solutions: ", err);
         res.status(500).json({ error: "Internal server error" });
     }
 })

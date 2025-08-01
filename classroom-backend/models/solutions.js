@@ -4,6 +4,7 @@ const solutionSchema = new Schema(
     {
         filename: {type: String, default: 'Solution'},
         url: {type: String, required: true},
+        publicId: {type: String},
         assignment: {type: Schema.Types.ObjectId, ref: 'Assignment', required: true},
         student: {type: Schema.Types.ObjectId, ref: 'Student', required: true},
         status: {

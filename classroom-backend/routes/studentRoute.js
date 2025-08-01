@@ -129,7 +129,7 @@ studentRouter.get("/:studentId/course/:courseId/submissions", async (req, res) =
         const submissions = await Solution.find({
             assignment: { $in: assignmentIds },
             student: studentId
-        }).populate('assignment', 'title marks')
+        }).populate('assignment', 'title marks').populate('gradedBy', 'name')
 
         const submittedAssignments = submissions.map(sub => sub.assignment._id)
 
@@ -146,13 +146,17 @@ studentRouter.get("/submissions/:studentId", async (req, res) => {
     try {
         if(!req.params.studentId) return res.status(400).json({error: "Student ID required!"})
 
-        const submissions = await Solution.find({student: req.params.studentId}).populate({
+        const submissions = await Solution.find({student: req.params.studentId}).populate([{
             path: 'assignment',
             populate:{
                 path: 'course',
                 select: 'name'
             }
-        })
+        }, {
+            path: 'gradedBy',
+            select: 'name'
+        }]
+    )
 
         res.status(200).json({submissions: submissions})
     }

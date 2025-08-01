@@ -33,7 +33,7 @@ export default function StudentCourse() {
     const [students, setStudents] = useState([])
     const [assignments, setAssignments] = useState([])
     const [submissions, setSubmissions] = useState([])
-    const [submittedAssignments, setSubmittedAssignments] = useState([]);
+    // const [submittedAssignments, setSubmittedAssignments] = useState([]);
 
     // PDF View State
     const [showPdfViewer, setShowPdfViewer] = useState(false);
@@ -84,58 +84,7 @@ export default function StudentCourse() {
         if(user) fetchCourses()
 
     }, [loading, user, courseId])
-    
 
-    // const submissions = [
-    //     {
-    //     id: '1',
-    //     assignmentName: 'Binary Trees Implementation',
-    //     submittedDate: '2024-03-24',
-    //     fileName: 'binary_tree.cpp',
-    //     status: 'graded',
-    //     grade: 'A-',
-    //     maxPoints: 100,
-    //     feedback: 'Excellent implementation with good optimization. Minor improvements in edge case handling.',
-    //     gradedBy: 'TA Sarah Wilson',
-    //     gradedDate: '2024-03-26',
-    //     canRequestReEvaluation: true
-    //     },
-    //     {
-    //     id: '2',
-    //     assignmentName: 'Sorting Algorithms',
-    //     submittedDate: '2024-03-18',
-    //     fileName: 'sorting.py',
-    //     status: 'graded',
-    //     grade: 'B+',
-    //     maxPoints: 85,
-    //     feedback: 'Good understanding of algorithms. Time complexity analysis could be more detailed.',
-    //     gradedBy: 'TA Mike Chen',
-    //     gradedDate: '2024-03-20',
-    //     canRequestReEvaluation: true
-    //     },
-    //     {
-    //     id: '3',
-    //     assignmentName: 'Hash Tables',
-    //     submittedDate: '2024-03-19',
-    //     fileName: 'hashtable.java',
-    //     status: 'graded',
-    //     grade: 'C+',
-    //     maxPoints: 90,
-    //     feedback: 'Basic implementation works but collision handling needs improvement.',
-    //     gradedBy: 'TA Emily Rodriguez',
-    //     gradedDate: '2024-03-22',
-    //     canRequestReEvaluation: true
-    //     },
-    //     {
-    //     id: '4',
-    //     assignmentName: 'Dynamic Programming',
-    //     submittedDate: '2024-03-25',
-    //     fileName: 'dp_solutions.cpp',
-    //     status: 'pending',
-    //     maxPoints: 95,
-    //     canRequestReEvaluation: false
-    //     }
-    // ];
 
     const pendingAssignments = assignments.filter(a => a.status === 'pending' || a.status === 'overdue');
 
@@ -193,7 +142,6 @@ export default function StudentCourse() {
             reason: reEvalReason
         });
         
-        // Reset form and close modal
         setReEvalReason('');
         setSelectedSubmission(null);
         setShowReEvalModal(false);
@@ -230,7 +178,7 @@ export default function StudentCourse() {
           formData.append('file', submissionForm.file);
           formData.append('upload_preset', 'gradely-submissions'); 
 
-          let pdfUrl = '';
+          let pdfUrl = '', publicId = '';
 
           try {
               const cloudinaryRes = await axios.post(
@@ -238,6 +186,7 @@ export default function StudentCourse() {
                 formData
               );
               pdfUrl = cloudinaryRes.data.secure_url;
+              publicId = cloudinaryRes.data.public_id;
               console.log("Pdf uploaded successfully: ")
 
           } catch (err) {
@@ -250,6 +199,7 @@ export default function StudentCourse() {
             const submissionRes = await axios.post('http://localhost:5000/submission/submitSolution', {
               filename: submissionForm.file.name,
               url: pdfUrl,
+              publicId: publicId,
               assignmentId: selectedAssignment._id,
               studentId: user.id
             })
@@ -515,11 +465,11 @@ export default function StudentCourse() {
                   </h3>
                   <div className="space-y-4">
                     {submissions.filter(s => s.status === 'graded').map((submission) => (
-                      <div key={submission.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                      <div key={submission._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                              <h4 className="text-lg font-semibold text-gray-900">{submission.assignmentName}</h4>
+                              <h4 className="text-lg font-semibold text-gray-900">{submission.assignment.title}</h4>
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getGradeColor(submission.grade)}`}>
                                 {submission.grade}
                               </span>
@@ -527,7 +477,7 @@ export default function StudentCourse() {
                             <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
                               <span className="flex items-center gap-1">
                                 <FileText className="h-4 w-4" />
-                                {submission.fileName}
+                                {submission.filename}
                               </span>
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-4 w-4" />
@@ -535,15 +485,20 @@ export default function StudentCourse() {
                               </span>
                               <span className="flex items-center gap-1">
                                 <User className="h-4 w-4" />
-                                Graded by: {submission.gradedBy}
+                                Graded by: {submission?.gradedBy?.name}
                               </span>
                             </div>
                             <div className="bg-gray-50 p-3 rounded-lg mb-3">
                               <p className="text-sm text-gray-700 font-medium mb-1">Feedback:</p>
                               <p className="text-sm text-gray-600">{submission.feedback}</p>
                             </div>
+
                             <div className="text-sm text-gray-500">
-                              Points: {submission.grade} / {submission.maxPoints} pts
+                              <b>Grade:</b> {submission.grade}
+                            </div>
+                            
+                            <div className="text-sm text-gray-500">
+                              <b>Score:</b> {submission.marks} / {submission.assignment.marks} marks
                             </div>
                           </div>
                           {submission.canRequestReEvaluation && (

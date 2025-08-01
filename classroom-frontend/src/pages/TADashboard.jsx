@@ -14,6 +14,7 @@ export default function TADashboard() {
     const [activeTab, setActiveTab] = useState('courses');
 
     const [assignments, setAssignments] = useState([])
+    const [checkedSolutions, setCheckedSolutions] = useState([])
 
 
     useEffect(() => {
@@ -22,12 +23,14 @@ export default function TADashboard() {
              try {
                 const res = await axios.get(`http://localhost:5000/ta/getCourses/${user.id}`)
 
-                setCourses(res.data.courses)
                 const courses = res.data.courses
+                setCourses(courses)
 
                 const allAssignments = courses.flatMap(course => course.assignments || []);
                 setAssignments(allAssignments)
 
+                const checkedSolutions = await axios.get(`http://localhost:5000/ta/getCheckedSolutions/${user.id}`)
+                setCheckedSolutions(checkedSolutions.data)
             }
             catch(err) {
                 console.log("Error loading courses: ", err);
@@ -37,44 +40,44 @@ export default function TADashboard() {
         if(user) fetchCourses()
     }, [user.id])
 
-    const checkedSolutions = [
-        { 
-        id: '1', 
-        studentName: 'Alice Johnson', 
-        assignment: 'Binary Trees Implementation', 
-        course: 'Data Structures', 
-        grade: 'A-', 
-        checkedDate: '2024-03-20', 
-        feedback: 'Good implementation, minor optimization needed' 
-        },
-        { 
-        id: '2', 
-        studentName: 'Bob Smith', 
-        assignment: 'Sorting Algorithms', 
-        course: 'Algorithms', 
-        grade: 'B+', 
-        checkedDate: '2024-03-22', 
-        feedback: 'Correct logic, could improve time complexity' 
-        },
-        { 
-        id: '3', 
-        studentName: 'Carol Davis', 
-        assignment: 'SQL Queries', 
-        course: 'Database Systems', 
-        grade: 'A', 
-        checkedDate: '2024-03-23', 
-        feedback: 'Excellent work, all queries optimized' 
-        },
-        { 
-        id: '4', 
-        studentName: 'David Wilson', 
-        assignment: 'Binary Trees Implementation', 
-        course: 'Data Structures', 
-        grade: 'B', 
-        checkedDate: '2024-03-21', 
-        feedback: 'Good understanding, some edge cases missed' 
-        },
-    ];
+    // const checkedSolutions = [
+    //     { 
+    //     id: '1', 
+    //     studentName: 'Alice Johnson', 
+    //     assignment: 'Binary Trees Implementation', 
+    //     course: 'Data Structures', 
+    //     grade: 'A-', 
+    //     checkedDate: '2024-03-20', 
+    //     feedback: 'Good implementation, minor optimization needed' 
+    //     },
+    //     { 
+    //     id: '2', 
+    //     studentName: 'Bob Smith', 
+    //     assignment: 'Sorting Algorithms', 
+    //     course: 'Algorithms', 
+    //     grade: 'B+', 
+    //     checkedDate: '2024-03-22', 
+    //     feedback: 'Correct logic, could improve time complexity' 
+    //     },
+    //     { 
+    //     id: '3', 
+    //     studentName: 'Carol Davis', 
+    //     assignment: 'SQL Queries', 
+    //     course: 'Database Systems', 
+    //     grade: 'A', 
+    //     checkedDate: '2024-03-23', 
+    //     feedback: 'Excellent work, all queries optimized' 
+    //     },
+    //     { 
+    //     id: '4', 
+    //     studentName: 'David Wilson', 
+    //     assignment: 'Binary Trees Implementation', 
+    //     course: 'Data Structures', 
+    //     grade: 'B', 
+    //     checkedDate: '2024-03-21', 
+    //     feedback: 'Good understanding, some edge cases missed' 
+    //     },
+    // ];
 
     const handleLogout = async () => {
         navigate('/login');
@@ -99,7 +102,6 @@ export default function TADashboard() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
-                    <p className="text-gray-600">Computer Science Department</p>
                 </div>
                 <button
                     onClick={handleLogout}

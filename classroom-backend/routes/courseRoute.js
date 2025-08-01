@@ -129,6 +129,10 @@ courseRouter.get("/getAssignments/:courseId", async(req, res) => {
                 populate: [{
                     path: 'student',
                     field: 'name'
+                },
+                {
+                    path: 'gradedBy',
+                    field: 'name'
                 }]
             }]
         })
@@ -166,6 +170,8 @@ courseRouter.get("/getAssignments/:courseId", async(req, res) => {
         res.status(500).json({error: "Internal Server Error"})
     }
 })
+
+
 
 
 export default courseRouter

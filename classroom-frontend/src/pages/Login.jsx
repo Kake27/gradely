@@ -197,7 +197,7 @@ export default function Login() {
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
+                {/* <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center">
                     <input
                         type="checkbox"
@@ -211,7 +211,7 @@ export default function Login() {
                     <a href="/forgot-password" className="text-blue-600 hover:text-blue-500">
                     Forgot password?
                     </a>
-                </div>
+                </div> */}
 
                 <button
                     type="submit"

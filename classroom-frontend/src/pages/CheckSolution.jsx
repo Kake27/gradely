@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, FileText, User, Calendar, Clock, BookOpen, Eye,Save,Send,X,CheckCircle,
-    AlertCircle,Star, Download} from 'lucide-react';
+import { ArrowLeft, FileText, User, Calendar, Eye,Save,Send,X,CheckCircle,} from 'lucide-react';
 import { useContext } from 'react';
 import { UserContext } from '../context/ContextProvider';
 import axios from 'axios';
@@ -80,9 +79,9 @@ export default function CheckSolution() {
 
   }, [loading, user, submissionId])
 
-  // Get the return path from location state or default to TA dashboard
+
   const returnPath = location.state?.returnPath || '/ta';
-  const userRole = location.state?.userRole || 'ta'; // 'ta' or 'faculty'
+  const userRole = location.state?.role; 
 
 
   const gradingRubric = [
@@ -205,7 +204,7 @@ export default function CheckSolution() {
   };
 
   const isOverdue = (submissionDate) => {
-    return submissionDate < new Date()
+    return new Date(submissionDate) < new Date()
   } 
 
   return (

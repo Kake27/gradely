@@ -33,10 +33,10 @@ export default function StudentDashboard() {
                     }))
                 ));
 
-                console.log(res.data.courses)
+                // console.log(res.data.courses)
 
                 const submissionsRes = await axios.get(`http://localhost:5000/student/submissions/${user.id}`)
-                // console.log(submissionsRes.data.submissions)
+                console.log(submissionsRes.data.submissions)
                 setSubmissions(submissionsRes.data.submissions)
             }
             catch(err) {
@@ -375,6 +375,9 @@ export default function StudentDashboard() {
                             Grade
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Grader
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Feedback
                         </th>
                         </tr>
@@ -402,8 +405,11 @@ export default function StudentDashboard() {
                                     {submission.grade}
                                 </span>
                                 <div className="text-xs text-gray-500 mt-1">
-                                    / {submission.maxPoints} pts
+                                   {submission.marks} / {submission.assignment.marks} marks
                                 </div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
+                                    {submission.gradedBy.name}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
                                 <div className="truncate" title={submission.feedback}>

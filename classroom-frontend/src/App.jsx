@@ -45,7 +45,7 @@ const App = () => (
       <Route path='/ta/courses/:courseId' element={<TACourse />} />
       <Route path='/student/courses/:courseId' element={<StudentCourse />} />
 
-      <Route path='/ta/checkSubmission/:assignmentId/:submissionId' element={<CheckSolution />}/>
+      <Route path='/checkSubmission/:assignmentId/:submissionId' element={<CheckSolution />}/>
 
       <Route path="/unauthorized" element={<Unauthorized />} />
 
