@@ -1,5 +1,3 @@
-import { useState } from 'react'
-import React from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import './App.css'
 import ProtectedRoute from './context/ProtectedRoutes'
@@ -18,7 +16,6 @@ import CheckSolution from './pages/CheckSolution'
 const App = () => (
   <Router>
     <Routes>
-      {/* <Route path='/' element={<div>Whalecum to the home page</div>} /> */}
       <Route path='/' element={<Login/>} />
       <Route path='/login' element={<Login/>} />
       <Route path='/signup' element={<SignUp />} />

@@ -44,7 +44,7 @@ export default function StudentCourse() {
         if(loading) return;
         const fetchCourses = async() => {
              try {
-              const res = await axios.get(`http://localhost:5000/course/getStudent/${courseId}`)
+              const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/course/getStudent/${courseId}`)
               const resStudents = res.data.students
               
               if(!(resStudents.some(student=>student._id.toString() === user.id.toString()))) {
@@ -57,10 +57,10 @@ export default function StudentCourse() {
               setTas(res.data.tas)
               setStudents(res.data.students)
 
-              const assignmentRes = await axios.get(`http://localhost:5000/course/getAssignments/${courseId}`)
+              const assignmentRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/course/getAssignments/${courseId}`)
               const assignments = assignmentRes.data.assignments
 
-              const submissionRes = await axios.get(`http://localhost:5000/student/${user.id}/course/${courseId}/submissions`)
+              const submissionRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/student/${user.id}/course/${courseId}/submissions`)
               setSubmissions(submissionRes.data.submissions)
 
               const submittedAssignments = submissionRes.data.submittedAssignments;
@@ -75,7 +75,7 @@ export default function StudentCourse() {
 
           }
           catch(err) {
-              console.log("Error fetching course: ", err);
+              toast.error("Error fetching course: ", err);
               navigate('/unauthorized')
               return;
           }
@@ -136,17 +136,17 @@ export default function StudentCourse() {
 
     const handleSubmitReEvaluation = () => {
         if (reEvalReason.trim() && selectedSubmission) {
-        // Here you would typically send the re-evaluation request to your backend
-        console.log('Re-evaluation request submitted:', {
-            submissionId: selectedSubmission.id,
-            reason: reEvalReason
-        });
+
+        // console.log('Re-evaluation request submitted:', {
+        //     submissionId: selectedSubmission.id,
+        //     reason: reEvalReason
+        // });
         
         setReEvalReason('');
         setSelectedSubmission(null);
         setShowReEvalModal(false);
         
-        // You might want to show a success message here
+
         alert('Re-evaluation request submitted successfully!');
         }
     };
@@ -172,7 +172,7 @@ export default function StudentCourse() {
     const handleSubmitSolution = async () => {
         if (submissionForm.file && selectedAssignment) {
           setUploading(true)
-          console.log("Submitting solution to assignment")
+          // console.log("Submitting solution to assignment")
 
           const formData = new FormData();
           formData.append('file', submissionForm.file);
@@ -187,7 +187,7 @@ export default function StudentCourse() {
               );
               pdfUrl = cloudinaryRes.data.secure_url;
               publicId = cloudinaryRes.data.public_id;
-              console.log("Pdf uploaded successfully: ")
+              console.log("Pdf uploaded successfully")
 
           } catch (err) {
               toast.error(err+ ' Failed to upload PDF to Cloudinary');
@@ -196,7 +196,7 @@ export default function StudentCourse() {
           }
 
           try {
-            const submissionRes = await axios.post('http://localhost:5000/submission/submitSolution', {
+            const submissionRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/submission/submitSolution`, {
               filename: submissionForm.file.name,
               url: pdfUrl,
               publicId: publicId,
@@ -559,11 +559,11 @@ export default function StudentCourse() {
                 <h2 className="text-2xl font-semibold text-gray-900 mb-6">Pending Assignments</h2>
                 <div className="space-y-4">
                   {pendingAssignments.map((assignment) => (
-                    <div key={assignment.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
+                    <div key={assignment._id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-900">{assignment.name}</h3>
+                            <h3 className="text-lg font-semibold text-gray-900">{assignment.title}</h3>
                             {getStatusIcon(assignment.status)}
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(assignment.status)}`}>
                               {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
@@ -575,7 +575,7 @@ export default function StudentCourse() {
                               <Calendar className="h-4 w-4" />
                               Due: {new Date(assignment.dueDate).toLocaleDateString()}
                             </span>
-                            <span>Max Points: {assignment.maxPoints}</span>
+                            <span>Max Points: {assignment.marks}</span>
                           </div>
                         </div>
                         <button 

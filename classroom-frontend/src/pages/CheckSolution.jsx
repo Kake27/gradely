@@ -65,12 +65,12 @@ export default function CheckSolution() {
 
     const fetchData = async() => {  
       try {
-        const submissionRes = await axios.get(`http://localhost:5000/submission/getSolution/${submissionId}`)
+        const submissionRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/submission/getSolution/${submissionId}`)
         setSubmissionData(submissionRes.data.submission)
         setAssignmentData(submissionRes.data.submission.assignment)
       }
       catch(err) {
-        console.log("Error fetching submission data: ", err);
+        toast.error("Error fetching submission data: ", err);
         return
       }
     }
@@ -162,9 +162,9 @@ export default function CheckSolution() {
       return;
     }
 
-    console.log(gradingForm)
+    // console.log(gradingForm)
     try {
-      const gradingRes = await axios.put(`http://localhost:5000/submission/gradeSolution/${submissionId}`, {
+      const gradingRes = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/submission/gradeSolution/${submissionId}`, {
         grade: gradingForm.grade,
         marks: gradingForm.totalPoints,
         feedback: gradingForm.feedback,
@@ -172,7 +172,7 @@ export default function CheckSolution() {
       })
 
       if(gradingRes.data.error) {
-        console.log("An error occured!")
+        toast.error("An error occured!")
         return;
       }
 
@@ -180,7 +180,7 @@ export default function CheckSolution() {
       navigate(returnPath);
     }
     catch (err) {
-      console.log("Error grading submission: ", err)
+      toast.error("Error grading submission: ", err)
       return;
     }
     
@@ -354,7 +354,7 @@ export default function CheckSolution() {
                     id="grade"
                     value={gradingForm.grade}
                     onChange={(e) => setGradingForm({ ...gradingForm, grade: e.target.value })}
-                    className={`w-1/2 px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors ${
+                    className={`w-1/2 px-3 py-2 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 transition-colors cursor-pointer ${
                       gradingForm.grade ? getGradeColor(gradingForm.grade) : 'border-gray-300'
                     }`}
                   >

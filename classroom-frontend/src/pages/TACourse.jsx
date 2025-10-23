@@ -5,6 +5,7 @@ import { ArrowLeft, Users, BookOpen, ClipboardList, CheckCircle, Clock,AlertTria
         GraduationCap,Eye,Star} from 'lucide-react';
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import toast, {Toaster} from "react-hot-toast";
 
 
 export default function TACourse() {
@@ -33,7 +34,7 @@ export default function TACourse() {
         if(loading) return;
         const fetchCourses = async() => {
              try {
-              const res = await axios.get(`http://localhost:5000/course/getTA/${courseId}`)
+              const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/course/getTA/${courseId}`)
               const resTAs = res.data.tas
               
               if(!(resTAs.some(ta=>ta._id.toString() === user.id.toString()))) {
@@ -46,7 +47,7 @@ export default function TACourse() {
               setTas(res.data.tas)
               setStudents(res.data.students)
 
-              const assignmentRes = await axios.get(`http://localhost:5000/course/getAssignments/${courseId}`)
+              const assignmentRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/course/getAssignments/${courseId}`)
               setAssignments(assignmentRes.data.assignments)
 
               // console.log(assignmentRes.data.assignments)
@@ -72,12 +73,9 @@ export default function TACourse() {
               setToGradeSolutions(ungradedSubmissions)
               setGradedSolutions(gradedSubmissions)
 
-              // console.log(gradedSubmissions)
-              // console.log(ungradedSubmissions)
-
           }
           catch(err) {
-              console.log("Error fetching course: ", err);
+              toast.error("Error fetching course: ", err);
               navigate('/unauthorized')
               return;
           }
@@ -138,7 +136,7 @@ export default function TACourse() {
   };
 
   const handleGradeSubmission = (submissionId, assignmentId) => {
-    navigate(`/ta/checkSubmission/${assignmentId}/${submissionId}` , {
+    navigate(`/checkSubmission/${assignmentId}/${submissionId}` , {
       state: {
         returnPath: window.location.pathname,
         role: 'ta'
@@ -171,6 +169,7 @@ export default function TACourse() {
 
     return (
       <div className="min-h-screen bg-gray-50">
+        <Toaster />
       {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -331,7 +330,6 @@ export default function TACourse() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
                                 <div className="text-sm font-medium text-gray-900">{solution.student.name}</div>
-                                {/* <div className="text-sm text-gray-500">{assignment.studentId}</div> */}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -398,7 +396,6 @@ export default function TACourse() {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div>
                                 <div className="text-sm font-medium text-gray-900">{solution.student.name}</div>
-                                {/* <div className="text-sm text-gray-500">{solution.studentId}</div> */}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -422,7 +419,7 @@ export default function TACourse() {
                               </div>
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
-                              TA Name Here
+                              {solution.gradedBy.name}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
                               <div className="truncate" title={solution.feedback}>
@@ -575,20 +572,20 @@ export default function TACourse() {
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <GraduationCap className="h-5 w-5 text-purple-600" />
-                    <h4 className="font-medium text-gray-900">Faculty ({faculty.length})</h4>
+                    <h4 className="font-medium text-gray-900">Faculty (1)</h4>
                   </div>
                   <div className="space-y-2">
-                    {faculty.map((member) => (
-                      <div key={member.id} className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg">
+                    {faculty && (
+                      <div key={faculty._id} className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg">
                         <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                          {member.name.charAt(0)}
+                          {faculty.name.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{member.name}</p>
-                          <p className="text-xs text-gray-500 truncate">{member.email}</p>
+                          <p className="text-sm font-medium text-gray-900 truncate">{faculty.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{faculty.email}</p>
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
 
@@ -600,7 +597,7 @@ export default function TACourse() {
                   </div>
                   <div className="space-y-2">
                     {tas.map((ta) => (
-                      <div key={ta.id} className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg">
+                      <div key={ta._id} className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg">
                         <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                           {ta.name.charAt(0)}
                         </div>
@@ -621,7 +618,7 @@ export default function TACourse() {
                   </div>
                   <div className="space-y-2">
                     {students.map((student) => (
-                      <div key={student.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div key={student._id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                         <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
                           {student.name.charAt(0)}
                         </div>

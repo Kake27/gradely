@@ -1,8 +1,9 @@
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/ContextProvider";
 import { useContext, useState, useEffect } from "react";
 import { BookOpen, Users, LogOut, Calendar, ClipboardList, Plus, X } from 'lucide-react';
 import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
 
 
 export default function FacultyDashboard() {
@@ -24,15 +25,14 @@ export default function FacultyDashboard() {
         if(loading) return;
         const fetchCourses = async () => {
             try {
-                const courseRes = await axios.get(`http://localhost:5000/faculty/getCourses/${user.id}`)
+                const courseRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/faculty/getCourses/${user.id}`)
                 setCourses(courseRes.data.courses)
 
-
-                const assignmentRes = await axios.get(`http://localhost:5000/faculty/getAssignments/${user.id}`)
+                const assignmentRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/faculty/getAssignments/${user.id}`)
                 setAssignments(assignmentRes.data.assignments)
             }
             catch(err) {
-                console.log("Error loading courses: ", err);
+                toast.error("Error loading courses: ", err);
             }
         };
 
@@ -49,7 +49,7 @@ export default function FacultyDashboard() {
 
     const handleCreateCourse = async () => {
         try {
-            const courseRes = await axios.post("http://localhost:5000/course/createCourse", {
+            const courseRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/course/createCourse`, {
                 name: courseName,
                 faculty: user.id
             })
@@ -58,24 +58,25 @@ export default function FacultyDashboard() {
                 console.error("Error creating course in backend:", courseRes.data.error);
                 return ;
             }
-            console.log("Course created in backend:", courseRes.data);
+            // console.log("Course created in backend:", courseRes.data);
 
-            const facultyRes = await axios.post("http://localhost:5000/faculty/addCourse", {
+            const facultyRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/faculty/addCourse`, {
                 facultyId: user.id,
                 courseId: courseRes.data._id
             })
 
             if(facultyRes.data.error) {
-                console.log("Error adding course to the faculty: ", facultyRes.data.error)
+                toast.error("Error adding course to the faculty: ", facultyRes.data.error)
                 return;
             }
 
-            console.log("Course added to faculty: ", facultyRes.data)
+            // console.log("Course added to faculty: ", facultyRes.data)
+            toast.success("Course created succesfully!")
 
             navigate(`/faculty/courses/${courseRes.data._id}`)
         }
         catch(err) {
-            console.error("Error creating course:", err);
+            toast.error("Error creating course:", err);
         }
     }
 
@@ -86,11 +87,11 @@ export default function FacultyDashboard() {
 
     return (
          <div className="min-h-screen bg-gray-50">
+            <Toaster />
             <header className="bg-white shadow">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.name}</h1>
-                    {/* <p className="text-gray-600">Computer Science Department</p> */}
                 </div>
                 <button
                     onClick={handleLogout}

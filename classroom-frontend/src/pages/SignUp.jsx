@@ -4,17 +4,18 @@ import { createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, db, provider } from "../firebase/firebaseConfig";
 import { setDoc, doc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom"
-import { GraduationCap, School, Users, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { GraduationCap, School, Users, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import toast, { Toaster } from "react-hot-toast";
 
 import axios from "axios"
 
 export default function SignUp() {
-    const { user, login, logout } = useContext(UserContext);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("");
     const [name, setName] = useState("")
+    const [isLoading, setIsLoading] = useState(false);
+    const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
     const navigate = useNavigate();
 
@@ -22,6 +23,7 @@ export default function SignUp() {
 
     const handleSubmit = async (e) => {
         e.preventDefault()  
+        setIsLoading(true)
 
         try {
             await createUserWithEmailAndPassword(auth, email.toLowerCase().trim(), password);
@@ -33,8 +35,10 @@ export default function SignUp() {
                 auth.signOut();
                 navigate("/");
             } else {
-                alert("Something went wrong: " + err.message);
+                toast.error("Something went wrong: " + err.message);
             }
+
+            setIsLoading(false);
             return ;
         }
 
@@ -50,43 +54,45 @@ export default function SignUp() {
         try {
             var res = "";
             if(role === "faculty") {
-                res = await axios.post("http://localhost:5000/faculty/createFaculty", {
+                res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/faculty/createFaculty`, {
                 email:email.toLowerCase().trim(), 
                 name: name, 
             })}
             else if(role === "ta") {
-                res = await axios.post("http://localhost:5000/ta/createTA", {
+                res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/ta/createTA`, {
                 email:email.toLowerCase().trim(), 
                 name: name, 
             })}
             else if(role === "student") {
-                res = await axios.post("http://localhost:5000/student/createStudent", {
+                res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/student/createStudent`, {
                 email:email.toLowerCase().trim(), 
                 name: name, 
             })}
            
             if(res.data.error) {
-                console.error("Error creating user in backend:", res.data.error);
+                toast.error("Error creating user in backend:", res.data.error);
+                setIsLoading(false)
                 return ;
             }
-            console.log("User created in backend:", res.data);
 
         } catch(err) {
             console.error("Error creating user in backend:", err);
         }
 
-        toast.success("Succesfully signed up!");
+        toast.success("Succesfully signed up! Please log in.");
         await delay(1000)
 
         navigate("/login")
     }
 
     const signUpWithGoogle = async() => {
+        setIsGoogleLoading(true)
         try {
             if(!role) {
                 toast("Please select a role!", {
                     icon: '⚠️'
                 })
+                setIsGoogleLoading(false)
                 return ;
             }
 
@@ -116,26 +122,27 @@ export default function SignUp() {
             try {
                 var res = "";
                 if(role === "faculty") {
-                    res = await axios.post("http://localhost:5000/faculty/createFaculty", {
+                    res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/faculty/createFaculty`, {
                     email:email.toLowerCase().trim(), 
                     name: userData.displayName, 
                 })}
                 else if(role === "ta") {
-                    res = await axios.post("http://localhost:5000/ta/createTA", {
+                    res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/ta/createTA`, {
                     email:email.toLowerCase().trim(), 
                     name: userData.displayName, 
                 })}
                 else if(role === "student") {
-                    res = await axios.post("http://localhost:5000/student/createStudent", {
+                    res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/student/createStudent`, {
                     email:email.toLowerCase().trim(), 
                     name: userData.displayName, 
                 })}
             
                 if(res.data.error) {
                     console.error("Error creating user in backend:", res.data.error);
+                    setIsGoogleLoading(false)
                     return ;
                 }
-                console.log("User created in backend:", res.data);
+                // console.log("User created in backend:", res.data);
 
             } catch(err) {
                 console.error("Error creating user in backend:", err);
@@ -146,8 +153,9 @@ export default function SignUp() {
             navigate("/login")
 
         } catch(err) {
-            console.log("Error signing up with Google:", err)
+            toast.error("Error signing up with Google:", err)
         }
+        finally {setIsGoogleLoading(false)}
     }   
 
     
@@ -231,9 +239,19 @@ export default function SignUp() {
 
                 <button
                     type="submit"
+                    disabled={isLoading || isGoogleLoading}
                     className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 flex items-center justify-center gap-2 transition-colors"
                 >
-                    Sign Up <ArrowRight className="h-5 w-5" />
+                    {isLoading ? (
+                        <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            Signing Up...
+                        </>
+                    ) : (
+                        <>
+                            Sign Up <ArrowRight className="h-5 w-5" />
+                        </>
+                    )}
                 </button>
                 </form>
 
@@ -249,10 +267,20 @@ export default function SignUp() {
 
                 <button
                     onClick={signUpWithGoogle}
+                    disabled={isLoading || isGoogleLoading}
                     className="mt-4 w-full flex items-center justify-center gap-3 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-gray-100"
                 >
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
-                    Sign up with Google
+                    {isGoogleLoading ? (
+                        <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            Signing up...
+                        </>
+                    ) : (
+                        <>
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+                            Sign up with Google
+                        </>
+                    )}
                 </button>
                 </div>
 

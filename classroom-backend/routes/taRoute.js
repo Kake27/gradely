@@ -118,7 +118,7 @@ taRouter.get("/getCheckedSolutions/:taId", async (req, res) => {
                 select: 'name'
             })
 
-        res.status(200).json({ checkedSolutions });
+        res.status(200).json({checkedSolutions});
 
     }
     catch (err) {

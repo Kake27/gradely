@@ -97,7 +97,7 @@ export default function FacultyCourse() {
 
 
             try {
-                const assignmentRes = await axios.post('http://localhost:5000/assignment/createAssignment', {
+                const assignmentRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/assignment/createAssignment`, {
                   assignmentData: newAssignment,
                   courseId: courseId,
                   facultyId: user.id
@@ -132,7 +132,7 @@ export default function FacultyCourse() {
         alert('Please select a PDF file only.');
         event.target.value = '';
       }
-  };
+    };
 
     // Add participant routes
     const handleAddParticipant = async () => {
@@ -141,7 +141,7 @@ export default function FacultyCourse() {
           try {
             let res;
             if(participantType==='ta') {
-                res = await axios.get("http://localhost:5000/ta/getTAID", {
+                res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/ta/getTAID`, {
                 params: {email: email}
               })
 
@@ -151,7 +151,7 @@ export default function FacultyCourse() {
               }
 
               const taId = res.data
-              const courseRes = await axios.post("http://localhost:5000/course/addTA", {
+              const courseRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/course/addTA`, {
                 courseId: courseId,
                 taId: taId
               })
@@ -163,7 +163,7 @@ export default function FacultyCourse() {
                 return;
               }
 
-              const taRes = await axios.post("http://localhost:5000/ta/addCourse", {
+              const taRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/ta/addCourse`, {
                 courseId: courseId,
                 taId: taId
               })
@@ -172,7 +172,7 @@ export default function FacultyCourse() {
             }
 
             else {
-              res = await axios.get("http://localhost:5000/student/getStudentID",{ 
+              res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/student/getStudentID`,{ 
                 params: {email: email}
               })
               if(!res.data) {
@@ -181,7 +181,7 @@ export default function FacultyCourse() {
               }
 
               const studentId = res.data
-              const courseRes = await axios.post("http://localhost:5000/course/addStudent", {
+              const courseRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/course/addStudent`, {
                 courseId: courseId,
                 studentId: studentId
               })
@@ -193,7 +193,7 @@ export default function FacultyCourse() {
                 return;
               }
 
-              const studentRes = await axios.post("http://localhost:5000/student/addCourse", {
+              const studentRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/student/addCourse`, {
                 courseId: courseId,
                 studentId: studentId
               })
@@ -202,7 +202,7 @@ export default function FacultyCourse() {
             }
           }
           catch(err) {
-            console.log("Error accessing db", err);
+            toast.error("Error accessing db", err);
             return;
           }
 
@@ -292,7 +292,7 @@ export default function FacultyCourse() {
 
           }
           catch(err) {
-              console.log("Error fetching course: ", err);
+              toast.error("Error fetching course: ", err);
               navigate('/unauthorized')
               return;
           }

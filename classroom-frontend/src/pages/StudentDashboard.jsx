@@ -1,9 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../context/ContextProvider";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, Users, LogOut, Calendar, ClipboardList, Upload, CheckCircle, Clock, AlertCircle,
-         User
- } from "lucide-react";
+import { BookOpen, Users, LogOut, Calendar, ClipboardList, Upload, CheckCircle, Clock, AlertCircle} from "lucide-react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -23,7 +21,7 @@ export default function StudentDashboard() {
     useEffect(() => {
         const fetchCourses = async() => {
             try {
-                const res = await axios.get(`http://localhost:5000/student/getCourses/${user.id}`)
+                const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/student/getCourses/${user.id}`)
                 setCourses(res.data.courses)
                 setAssignments(res.data.courses.flatMap(course => 
                     (course.assignments || []).map(assignment => ({
@@ -35,98 +33,18 @@ export default function StudentDashboard() {
 
                 // console.log(res.data.courses)
 
-                const submissionsRes = await axios.get(`http://localhost:5000/student/submissions/${user.id}`)
-                console.log(submissionsRes.data.submissions)
+                const submissionsRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/student/submissions/${user.id}`)
+                // console.log(submissionsRes.data.submissions)
                 setSubmissions(submissionsRes.data.submissions)
             }
             catch(err) {
-                console.log("Error loading courses: ", err);
+                toast.error("There was an error loading your courses: ", err);
             }
         }
         fetchCourses()
     }, [user.id])
 
-    // const assignments = [
-    //     { 
-    //     id: '1', 
-    //     name: 'Binary Trees Implementation', 
-    //     course: 'Data Structures', 
-    //     dueDate: '2024-03-25', 
-    //     description: 'Implement binary search tree with insert, delete, and search operations',
-    //     maxPoints: 100,
-    //     status: 'pending'
-    //     },
-    //     { 
-    //     id: '2', 
-    //     name: 'Sorting Algorithms Analysis', 
-    //     course: 'Algorithms', 
-    //     dueDate: '2024-03-28', 
-    //     description: 'Compare time complexity of different sorting algorithms',
-    //     maxPoints: 80,
-    //     status: 'pending'
-    //     },
-    //     { 
-    //     id: '3', 
-    //     name: 'SQL Query Optimization', 
-    //     course: 'Database Systems', 
-    //     dueDate: '2024-03-20', 
-    //     description: 'Optimize given SQL queries for better performance',
-    //     maxPoints: 90,
-    //     status: 'overdue'
-    //     },
-    //     { 
-    //     id: '4', 
-    //     name: 'Project Proposal', 
-    //     course: 'Software Engineering', 
-    //     dueDate: '2024-04-05', 
-    //     description: 'Submit detailed project proposal with timeline',
-    //     maxPoints: 50,
-    //     status: 'submitted'
-    //     },
-    // ];
 
-    // const submissions = [
-    //     { 
-    //     id: '1', 
-    //     assignmentName: 'Linked List Implementation', 
-    //     course: 'Data Structures', 
-    //     submittedDate: '2024-03-15', 
-    //     status: 'checked',
-    //     grade: 'A-',
-    //     maxPoints: 100,
-    //     feedback: 'Excellent implementation! Minor optimization suggestions in comments.',
-    //     fileName: 'linked_list.cpp'
-    //     },
-    //     { 
-    //     id: '2', 
-    //     assignmentName: 'Graph Traversal', 
-    //     course: 'Algorithms', 
-    //     submittedDate: '2024-03-18', 
-    //     status: 'checked',
-    //     grade: 'B+',
-    //     maxPoints: 85,
-    //     feedback: 'Good understanding of BFS and DFS. Edge case handling could be improved.',
-    //     fileName: 'graph_traversal.py'
-    //     },
-    //     { 
-    //     id: '3', 
-    //     assignmentName: 'Database Design', 
-    //     course: 'Database Systems', 
-    //     submittedDate: '2024-03-22', 
-    //     status: 'unchecked',
-    //     maxPoints: 75,
-    //     fileName: 'database_design.sql'
-    //     },
-    //     { 
-    //     id: '4', 
-    //     assignmentName: 'Project Proposal', 
-    //     course: 'Software Engineering', 
-    //     submittedDate: '2024-03-24', 
-    //     status: 'unchecked',
-    //     maxPoints: 50,
-    //     fileName: 'project_proposal.pdf'
-    //     },
-    // ];
 
     const handleLogout = async () => {
         navigate("/login")

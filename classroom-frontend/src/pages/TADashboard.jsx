@@ -21,7 +21,7 @@ export default function TADashboard() {
         if(loading) return;
         const fetchCourses = async() => {
              try {
-                const res = await axios.get(`http://localhost:5000/ta/getCourses/${user.id}`)
+                const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/ta/getCourses/${user.id}`)
 
                 const courses = res.data.courses
                 setCourses(courses)
@@ -29,11 +29,11 @@ export default function TADashboard() {
                 const allAssignments = courses.flatMap(course => course.assignments || []);
                 setAssignments(allAssignments)
 
-                const checkedSolutions = await axios.get(`http://localhost:5000/ta/getCheckedSolutions/${user.id}`)
-                setCheckedSolutions(checkedSolutions.data)
+                const checkedSolutions = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/ta/getCheckedSolutions/${user.id}`)
+                setCheckedSolutions(checkedSolutions.data.checkedSolutions || [])
             }
             catch(err) {
-                console.log("Error loading courses: ", err);
+                toast.error("Error loading courses: ", err);
             }
         }
 
@@ -263,7 +263,7 @@ export default function TADashboard() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {checkedSolutions.map((solution) => (
-                        <tr key={solution.id} className="hover:bg-gray-50">
+                        <tr key={solution._id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {solution.studentName}
                             </td>
