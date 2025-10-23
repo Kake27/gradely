@@ -82,7 +82,7 @@ export default function Login() {
             if (err.code === "auth/invalid-credential") {
                 toast.error("You have entered either an invalid email or password. Please try again or sign up.");
             } else {
-                toast.error("Something went wrong: " + err.message);
+                toast.error("Something went wrong: " + err);
             }
             return ;
         }
